@@ -1,11 +1,10 @@
 <script setup>
-import MenuVue from '@/views/Menu.vue';
+
 </script>
 
 <template>
 
-  <!-- <router-view></router-view> -->
-  <MenuVue />
+  <router-view></router-view>
 </template>
 
 <style scoped>

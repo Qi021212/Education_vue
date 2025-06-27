@@ -17,7 +17,7 @@
             </div>
         </el-header>
 
-        <el-container>
+        <el-container style="margin-top: 60px; height: calc(100vh - 60px);">
             <!-- 侧边栏菜单 -->
             <el-aside :width="isCollapse ? '64px' : '200px'" class="aside">
                 <el-menu :default-active="route.path" :collapse="isCollapse" :collapse-transition="false" class="menu"
@@ -133,9 +133,14 @@ const toggleCollapse = () => {
 <style scoped>
 .layout-container {
     height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .header {
+    position: fixed;
+    z-index: 1000;
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: space-between;
