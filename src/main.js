@@ -12,7 +12,6 @@ import App from './App.vue'
 
 const app =createApp(App);
 const pinia = createPinia();
-pinia.use(persist);
 app.use(router);
 app.use(ElementPlus);
 app.mount('#app')
