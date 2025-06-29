@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 //导入组件
 import LayoutVue from '@/views/Menu.vue'
 import TeachingMaterial from '@/views/teaching/TeachingMaterial.vue'
+import TeachingVideo from '@/views/teaching/TeachingVideo.vue'
 // import MainVue from '@/views/Main.vue'
 
 //定义路由
@@ -11,8 +12,8 @@ const routes = [
     {
         path: '/', component: LayoutVue, redirect: '/main', children: [
             //             { path: '/main', component: MainVue },
-            {path:'teachingMaterial', component: TeachingMaterial},
-
+            { path: 'teachingMaterial', component: TeachingMaterial },
+            { path: 'teachingVideo', component: TeachingVideo }
         ]
     }
 ]
