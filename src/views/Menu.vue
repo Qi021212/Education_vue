@@ -90,8 +90,8 @@ const menus = ref([
         title: '作业管理',
         icon: Files,
         children: [
-            { title: '课程作业', path: '/homework' },
-            { title: '作业批改', path: '/homeworkCorrecting' },
+            { title: '作业发布记录', path: '/homeworkAssignment' },
+            { title: '作业收取情况', path: '/homeworkCollection' },
         ]
     },
     {

@@ -4,6 +4,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import LayoutVue from '@/views/Menu.vue'
 import TeachingMaterial from '@/views/teaching/TeachingMaterial.vue'
 import TeachingVideo from '@/views/teaching/TeachingVideo.vue'
+import HomeworkAssignment from '@/views/homework/HomeworkAssignment.vue'
 // import MainVue from '@/views/Main.vue'
 
 //定义路由
@@ -13,7 +14,8 @@ const routes = [
         path: '/', component: LayoutVue, redirect: '/main', children: [
             //             { path: '/main', component: MainVue },
             { path: 'teachingMaterial', component: TeachingMaterial },
-            { path: 'teachingVideo', component: TeachingVideo }
+            { path: 'teachingVideo', component: TeachingVideo },
+            { path: 'homeworkAssignment', component: HomeworkAssignment },
         ]
     }
 ]
