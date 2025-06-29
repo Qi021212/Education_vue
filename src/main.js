@@ -7,7 +7,6 @@ import 'element-plus/dist/index.css'
 //导入路由
 import router from './router/index.js'
 
-
 import { createApp } from 'vue'
 import App from './App.vue'
 
