@@ -83,7 +83,7 @@ const handleLogin = () => {
             })
 
             ElMessage.success('登录成功')
-            switch (loginForm.value.role) {
+            /*switch (loginForm.value.role) {
                 case 'admin':
                     router.push('/admin/dashboard')
                     break
@@ -95,7 +95,8 @@ const handleLogin = () => {
                     break
                 default:
                     router.push('/')
-            }
+            }*/
+           router.push('/main')
         }
     })
 }
@@ -150,7 +151,7 @@ const redirectToRegister = () => {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.3);
 }
 
 .login-form {
