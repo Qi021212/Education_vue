@@ -1,4 +1,5 @@
 import './assets/main.css'
+// 导入 Pinia
 import { createPinia } from 'pinia'
 // 导入 Element Plus
 import ElementPlus from 'element-plus'

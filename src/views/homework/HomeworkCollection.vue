@@ -123,7 +123,6 @@ const categories = [
 const statusOptions = [
     { value: 'submitted', label: '已提交', type: 'info' },
     { value: 'graded', label: '已批改', type: 'success' },
-    { value: 'late', label: '迟交', type: 'warning' },
     { value: 'missing', label: '未交', type: 'danger' }
 ]
 

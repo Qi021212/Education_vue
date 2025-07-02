@@ -10,10 +10,29 @@
             </div>
 
             <div class="header-right">
-                <el-avatar :size="40" src="https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png" />
-                <el-link :underline="false" :icon="CircleClose" @click="handleLogout">
-                    退出登录
-                </el-link>
+                <el-dropdown @command="handleCommand">
+                    <div class="user-info">
+                        <el-avatar :size="40"
+                            src="https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png" />
+                        <span class="user-name">{{ userName }}</span>
+                    </div>
+                    <template #dropdown>
+                        <el-dropdown-menu>
+                            <el-dropdown-item command="profile">
+                                <el-icon>
+                                    <User />
+                                </el-icon>
+                                个人信息
+                            </el-dropdown-item>
+                            <el-dropdown-item divided command="logout">
+                                <el-icon>
+                                    <CircleClose />
+                                </el-icon>
+                                退出登录
+                            </el-dropdown-item>
+                        </el-dropdown-menu>
+                    </template>
+                </el-dropdown>
             </div>
         </el-header>
 
@@ -60,16 +79,17 @@ import { useRouter } from 'vue-router'
 import {
     ElContainer, ElHeader, ElMain, ElAside, ElMenu,
     ElMenuItem, ElSubMenu, ElAvatar, ElMessageBox,
-    ElIcon
+    ElIcon, ElDropdown, ElDropdownMenu, ElDropdownItem
 } from 'element-plus'
 import {
     House, Document, Collection, Files, CircleClose, DocumentChecked,
-    Fold, Expand
+    Fold, Expand, User
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const route = useRouter().currentRoute.value
 const isCollapse = ref(false)
+const userName = ref('张老师') // 这里可以从用户信息中获取实际用户名
 
 // 菜单数据
 const menus = ref([
@@ -112,6 +132,16 @@ const menus = ref([
         ]
     }
 ])
+
+// 处理下拉菜单命令
+const handleCommand = (command) => {
+    if (command === 'logout') {
+        handleLogout()
+    } else if (command === 'profile') {
+        // 跳转到个人信息页面
+        router.push('/teacherProfile')
+    }
+}
 
 // 退出登录
 const handleLogout = () => {
@@ -165,12 +195,15 @@ const toggleCollapse = () => {
     align-items: center;
 }
 
-.header-right .el-avatar {
-    margin-right: 15px;
+.user-info {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
 }
 
-.header-right .el-link {
-    color: #fff;
+.user-name {
+    margin-left: 10px;
+    font-size: 14px;
 }
 
 .aside {
