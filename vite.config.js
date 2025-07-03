@@ -17,7 +17,7 @@ export default defineConfig({
   //解决跨域问题
   server: {
     proxy: {
-      '/api': {//获取路径中包含了/api的请求，就会被代理到http://localhost:8080
+      '/smartEdu': {//获取路径中包含了/api的请求，就会被代理到http://localhost:8080
         target: 'http://localhost:8080',//代理的目标地址
         changeOrigin: true,//修改源
         rewrite: (path) => path.replace(/^\/api/, '')//重写路径

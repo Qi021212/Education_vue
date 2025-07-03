@@ -1,34 +1,40 @@
-// stores/authStore.js
 import { defineStore } from 'pinia'
+import { ref } from 'vue'
 
-export const useAuthStore = defineStore('auth', {
-  state: () => ({
-    currentRole: 'teacher', // 默认角色
-    isAuthenticated: false,
-    userInfo: null
-  }),
-  actions: {
-    setRole(role) {
-      this.currentRole = role
-    },
-    login(userData) {
-      // 这里应该是实际的登录逻辑
-      this.isAuthenticated = true
-      this.userInfo = userData
-    },
-    register(userData) {
-      // 这里应该是实际的注册逻辑
-      this.isAuthenticated = true
-      this.userInfo = userData
-    },
-    logout() {
-      this.isAuthenticated = false
-      this.userInfo = null
-    }
-  },
-  getters: {
-    isAdmin: (state) => state.currentRole === 'admin',
-    isTeacher: (state) => state.currentRole === 'teacher',
-    isAssistant: (state) => state.currentRole === 'assistant'
+export const useAuthStore = defineStore('auth', () => {
+  const token = ref('')
+  const username = ref('');
+  const role = ref('');
+  const isAuthenticated = ref(false);
+
+  const setToken = (newToken) => {
+    token.value = newToken
+  }
+
+  const removeToken = () => {
+    token.value = ''
+  }
+
+  const login = (loginData) => {
+    username.value = loginData.username;
+    role.value = loginData.role;
+    isAuthenticated.value = true;
+  }
+
+  const logout = () => {
+    removeToken()
+    username.value = '';
+    role.value = '';
+    isAuthenticated.value = false;
+  }
+  return {
+    token,
+    username,
+    role,
+    isAuthenticated,
+    setToken,
+    removeToken,
+    login,
+    logout
   }
 })

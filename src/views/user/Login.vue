@@ -12,8 +12,8 @@
         <el-col :span="12" class="login-form">
             <h2>登录</h2>
             <el-form :model="loginForm" :rules="loginRules" ref="loginFormRef">
-                <el-form-item prop="workId">
-                    <el-input v-model="loginForm.workId" placeholder="请输入工号" :prefix-icon="User"></el-input>
+                <el-form-item prop="username">
+                    <el-input v-model="loginForm.username" placeholder="请输入工号" :prefix-icon="User"></el-input>
                 </el-form-item>
 
                 <el-form-item prop="password">
@@ -52,53 +52,50 @@ const authStore = useAuthStore()
 const router = useRouter()
 
 const loginForm = ref({
-    workId: '',
+    username: '',
     password: '',
     role: 'teacher'
 })
 
 const loginFormRef = ref(null)
+const loading = ref(false)
 
 const loginRules = {
-    workId: [
-        { required: true, message: '请输入工号', trigger: 'blur' },
-        { pattern: /^\d{6,10}$/, message: '工号应为6-10位数字', trigger: 'blur' }
-    ],
-    password: [
-        { required: true, message: '请输入密码', trigger: 'blur' },
-        { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
-    ],
     role: [
         { required: true, message: '请选择角色', trigger: 'change' }
     ]
 }
 
-const handleLogin = () => {
-    loginFormRef.value.validate((valid) => {
-        if (valid) {
-            authStore.setRole(loginForm.value.role)
-            authStore.login({
-                workId: loginForm.value.workId,
-                role: loginForm.value.role
-            })
+import { adminLogin, teacherLogin } from '@/api/user.js'
+const handleLogin = async () => {
+    try {
+        loading.value = true
+        await loginFormRef.value.validate()
 
-            ElMessage.success('登录成功')
-            /*switch (loginForm.value.role) {
-                case 'admin':
-                    router.push('/admin/dashboard')
-                    break
-                case 'teacher':
-                    router.push('/teacher/dashboard')
-                    break
-                case 'assistant':
-                    router.push('/assistant/dashboard')
-                    break
-                default:
-                    router.push('/')
-            }*/
-           router.push('/main')
+        let response
+        if (loginForm.value.role === 'admin') {
+            response = await adminLogin(loginForm.value)
+        } else {
+            response = await teacherLogin(loginForm.value)
         }
-    })
+        if (response.code === 200) {
+            // 登录成功，更新store状态
+            authStore.setToken(response.token)
+            authStore.login(loginForm.value)
+            // 跳转到首页
+            ElMessage.success('登录成功')
+            router.push('/main')
+        } else {
+            ElMessage.error(response.message || '登录失败，请重试')
+        }
+
+
+
+    } catch (error) {
+        ElMessage.error(error.response?.message || error.message)
+    } finally {
+        loading.value = false
+    }
 }
 
 const redirectToRegister = () => {
