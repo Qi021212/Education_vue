@@ -71,7 +71,6 @@ const handleLogin = async () => {
     try {
         loading.value = true
         await loginFormRef.value.validate()
-
         let response
         if (loginForm.value.role === 'admin') {
             response = await adminLogin(loginForm.value)

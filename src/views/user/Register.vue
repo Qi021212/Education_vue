@@ -22,8 +22,8 @@
 
       <!-- 第一步：账号信息 -->
       <el-form v-if="currentStep === 1" :model="registerForm" :rules="accountRules" ref="accountFormRef">
-        <el-form-item prop="workId">
-          <el-input v-model="registerForm.workId" placeholder="请输入工号" :prefix-icon="User"></el-input>
+        <el-form-item prop="t_username">
+          <el-input v-model="registerForm.t_username" placeholder="请输入工号" :prefix-icon="User"></el-input>
         </el-form-item>
 
         <el-form-item prop="password">
@@ -34,6 +34,14 @@
         <el-form-item prop="confirmPassword">
           <el-input type="password" v-model="registerForm.confirmPassword" placeholder="请再次输入密码" :prefix-icon="Lock"
             show-password></el-input>
+        </el-form-item>
+
+        <el-form-item prop="role">
+          <el-radio-group v-model="registerForm.role">
+            <el-radio label="admin">管理员</el-radio>
+            <el-radio label="teacher">教师</el-radio>
+            <el-radio label="assistant">助教</el-radio>
+          </el-radio-group>
         </el-form-item>
 
         <el-form-item>
@@ -47,12 +55,12 @@
 
       <!-- 第二步：个人信息 -->
       <el-form v-else :model="registerForm" :rules="infoRules" ref="infoFormRef">
-        <el-form-item prop="name">
-          <el-input v-model="registerForm.name" placeholder="请输入姓名"></el-input>
+        <el-form-item prop="t_name">
+          <el-input v-model="registerForm.t_name" placeholder="请输入姓名"></el-input>
         </el-form-item>
 
-        <el-form-item prop="phone">
-          <el-input v-model="registerForm.phone" placeholder="请输入联系电话"></el-input>
+        <el-form-item prop="tel">
+          <el-input v-model="registerForm.tel" placeholder="请输入联系电话"></el-input>
         </el-form-item>
 
         <el-form-item prop="gender">
@@ -89,20 +97,19 @@ import { ref } from 'vue'
 import { User, Lock } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { useAuthStore } from '@/stores/authStore'
 
-const authStore = useAuthStore()
 const router = useRouter()
 
 const currentStep = ref(1)
 const registerForm = ref({
-  workId: '',
+  t_username: '',
   password: '',
   confirmPassword: '',
-  name: '',
+  role: 'teacher',
+  t_name: '',
   gender: 'male',
-  avatar: null,
-  phone: '',
+  avatar: 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png',
+  tel: '',
   course: ''
 })
 
@@ -121,7 +128,7 @@ const validatePassword = (rule, value, callback) => {
 
 // 第一步验证规则
 const accountRules = {
-  workId: [
+  t_username: [
     { required: true, message: '请输入工号', trigger: 'blur' },
     { pattern: /^\d{6,10}$/, message: '工号应为6-10位数字', trigger: 'blur' }
   ],
@@ -132,16 +139,19 @@ const accountRules = {
   confirmPassword: [
     { required: true, message: '请再次输入密码', trigger: 'blur' },
     { validator: validatePassword, trigger: 'blur' }
+  ],
+  role: [
+    { required: true, message: '请选择角色', trigger: 'change' }
   ]
 }
 
 // 第二步验证规则
 const infoRules = {
-  name: [
+  t_name: [
     { required: true, message: '请输入姓名', trigger: 'blur' },
     { min: 2, max: 10, message: '姓名长度在2到10个字符', trigger: 'blur' }
   ],
-  phone: [
+  tel: [
     { required: true, message: '请输入联系电话', trigger: 'blur' },
     { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur' }
   ],
@@ -151,11 +161,12 @@ const infoRules = {
   gender: [
     { required: true, message: '请选择性别', trigger: 'change' }
   ],
-  avatar: [
-    { required: true, message: '请上传头像', trigger: 'change' }
-  ]
+  // avatar: [
+  //   { required: true, message: '请上传头像', trigger: 'change' }
+  // ]
 }
 
+import { uploadFile } from '@/api/file'
 // 处理头像上传
 const handleAvatarUpload = (file) => {
   const isImage = file.raw.type.includes('image')
@@ -170,14 +181,30 @@ const handleAvatarUpload = (file) => {
     return false
   }
 
-  registerForm.value.avatar = file.raw
+  // 使用上传接口
+  uploadFile(file.raw).then(response => {
+    if (response) {
+      // 在返回的URL前添加/upload前缀
+      const avatarUrl = `upload/${response.file}`
+      console.log('上传的头像URL:', avatarUrl)
+      registerForm.value.avatar = avatarUrl
+    } else {
+      ElMessage.error('头像上传失败：无效的响应数据')
+    }
+  }).catch(error => {
+    console.error('头像上传错误:', error)
+    ElMessage.error('头像上传失败')
+  }).finally(() => {
+    // 验证头像字段
+    infoFormRef.value.validateField('avatar')
+  })
+
+  // 显示本地预览
   const reader = new FileReader()
   reader.onload = (e) => {
     avatarPreview.value = e.target.result
   }
   reader.readAsDataURL(file.raw)
-
-  infoFormRef.value.validateField('avatar')
 }
 
 // 下一步
@@ -193,32 +220,38 @@ const nextStep = () => {
 const prevStep = () => {
   currentStep.value = 1
 }
-
+import { teacherRegister, adminRegister } from '@/api/user'
 // 提交注册
-const handleRegister = () => {
-  infoFormRef.value.validate((valid) => {
-    if (valid) {
-      const formData = new FormData()
-      for (const key in registerForm.value) {
-        if (registerForm.value[key] !== null) {
-          formData.append(key, registerForm.value[key])
-        }
-      }
+const handleRegister = async () => {
+  try {
+    // 验证第二步表单
+    await infoFormRef.value.validate()
 
-      authStore.setRole('teacher')
-      authStore.register({
-        workId: registerForm.value.workId,
-        name: registerForm.value.name,
-        gender: registerForm.value.gender,
-        phone: registerForm.value.phone,
-        course: registerForm.value.course,
-        role: 'teacher'
-      })
-
-      ElMessage.success('注册成功')
-      router.push('/main')
+    console.log('注册表单数据:', registerForm.value)
+    const { confirmPassword, ...submitData } = registerForm.value
+    // const formData = new FormData()
+    // for (const key in registerForm.value) { 
+    //   if (registerForm.value[key] !== null) {
+    //     formData.append(key, registerForm.value[key])
+    //   }
+    // }
+    console.log('提交的表单数据:', submitData)
+    let response
+    if (registerForm.value.role === 'admin') {
+      response = await adminRegister(submitData)
+    } else {
+      response = await teacherRegister(submitData)
     }
-  })
+    if (response) {
+      ElMessage.success('注册成功')
+      router.push('/login')
+    } else {
+      ElMessage.error(response.message)
+    }
+
+  } catch (error) {
+    console.error('注册失败:', error)
+  }
 }
 
 const redirectToLogin = () => {
@@ -314,10 +347,11 @@ h2 {
   margin-top: 10px;
 }
 
-.avatar-button{
+.avatar-button {
   width: 100%;
   margin-left: 0;
 }
+
 .avatar-preview img {
   width: 80px;
   height: 80px;
@@ -326,8 +360,8 @@ h2 {
 }
 
 .el-radio-group {
-  width: 50%;
-  margin-left: 25%;
+  width: 70%;
+  margin-left: 15%;
   display: flex;
   justify-content: space-between;
 }

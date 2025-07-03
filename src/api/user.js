@@ -1,21 +1,35 @@
 import request from '@/utils/request.js'
+import axios from 'axios';
 
 // 管理员登录
-export const adminLogin = (data) => {
-    return request({
-        url: '/users/login',
-        method: 'post',
-        data
-    })
+export const adminLogin = async (data) => {
+    try {
+        const response = await request.post('/users/login',
+            null, // 请求体为空
+            {
+                params: {
+                    username: data.username,
+                    password: data.password,
+                    role: data.role
+                },
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            }
+        );
+        return response;
+    } catch (error) {
+        throw new Error(error);
+    }
 }
 
 // 教师登录
 export const teacherLogin = async (data) => {
     try {
-        const response = await request.post('/teacher/login', 
+        const response = await request.post('/teacher/login',
             null, // 请求体为空
             {
-                params: { 
+                params: {
                     username: data.username,
                     password: data.password,
                     role: data.role
@@ -39,10 +53,18 @@ export const getTeacherInfo = () => {
     })
 }
 
+// 管理员注册
+export const adminRegister = (data) => {
+    return axios({
+        url: '/smartEdu/users/register',
+        method: 'post',
+        data
+    })
+}
 // 教师注册
 export const teacherRegister = (data) => {
-    return request({
-        url: '/teacher/register',
+    return axios({
+        url: '/smartEdu/teacher/register',
         method: 'post',
         data
     })
