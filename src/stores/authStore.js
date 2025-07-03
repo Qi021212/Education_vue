@@ -3,8 +3,7 @@ import { ref } from 'vue'
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref('')
-  const username = ref('');
-  const role = ref('');
+  const userInfo = ref({});
   const isAuthenticated = ref(false);
 
   const setToken = (newToken) => {
@@ -16,22 +15,21 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const login = (loginData) => {
-    username.value = loginData.username;
-    role.value = loginData.role;
+    userInfo.value = loginData;
     isAuthenticated.value = true;
   }
 
   const logout = () => {
     removeToken()
-    username.value = '';
-    role.value = '';
+    userInfo.value = {};
     isAuthenticated.value = false;
   }
   return {
     token,
-    username,
-    role,
+    // username,
+    // role,
     isAuthenticated,
+    userInfo,
     setToken,
     removeToken,
     login,

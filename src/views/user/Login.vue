@@ -80,7 +80,7 @@ const handleLogin = async () => {
         if (response.code === 200) {
             // 登录成功，更新store状态
             authStore.setToken(response.token)
-            authStore.login(loginForm.value)
+            authStore.login(response.data)
             // 跳转到首页
             ElMessage.success('登录成功')
             router.push('/main')
