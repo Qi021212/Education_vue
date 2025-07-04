@@ -170,8 +170,6 @@ const saveProfile = () => {
     if (response && response.code === 200) {
       // 更新store中的用户信息
       authStore.updateUserInfo(teacherInfo)
-      console.log('个人信息保存成功:', teacherInfo)
-      console.log('更新后的用户信息:', authStore.userInfo)
       editing.value = false
       ElMessage.success('个人信息保存成功')
     } else {
@@ -288,6 +286,7 @@ const submitPasswordChange = () => {
         // 清空密码表单
         passwordForm.newPassword = ''
         passwordForm.confirmPassword = ''
+        authStore.updateUserInfo({ password: passwordForm.newPassword })
 
       } else {
         throw new Error(response?.message || '密码修改失败')
