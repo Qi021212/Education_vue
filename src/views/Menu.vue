@@ -13,8 +13,8 @@
                 <el-dropdown @command="handleCommand">
                     <div class="user-info">
                         <el-avatar :size="40"
-                            src="https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png" />
-                        <span class="user-name">{{ userName }}</span>
+                            :src="avatarPath" />
+                        <span class="user-name">{{ userInfo.t_name }}</span>
                     </div>
                     <template #dropdown>
                         <el-dropdown-menu>
@@ -89,7 +89,6 @@ import {
 const router = useRouter()
 const route = useRouter().currentRoute.value
 const isCollapse = ref(false)
-const userName = ref('张老师') // 这里可以从用户信息中获取实际用户名
 
 // 菜单数据
 const menus = ref([
@@ -133,6 +132,11 @@ const menus = ref([
     }
 ])
 
+import { useAuthStore } from '@/stores/authStore'
+const userInfo = useAuthStore().userInfo
+const avatarPath = userInfo.avatar
+
+
 // 处理下拉菜单命令
 const handleCommand = (command) => {
     if (command === 'logout') {
@@ -150,6 +154,7 @@ const handleLogout = () => {
         cancelButtonText: '取消',
         type: 'warning',
     }).then(() => {
+        useAuthStore().logout()
         router.push('/login')
     })
 }

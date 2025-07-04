@@ -69,32 +69,6 @@
               </div>
             </el-descriptions-item>
             
-            <el-descriptions-item label="所教班级">
-              <el-select
-                v-if="editing"
-                v-model="teacherInfo.classes"
-                multiple
-                filterable
-                allow-create
-                placeholder="请选择或输入班级"
-                style="width: 100%">
-                <el-option
-                  v-for="cls in allClasses"
-                  :key="cls"
-                  :label="cls"
-                  :value="cls" />
-              </el-select>
-              <div v-else class="tags-container">
-                <el-tag
-                  v-for="cls in teacherInfo.classes"
-                  :key="cls"
-                  type="info"
-                  size="small"
-                  class="class-tag">
-                  {{ cls }}
-                </el-tag>
-              </div>
-            </el-descriptions-item>
           </el-descriptions>
         </div>
       </div>
@@ -175,12 +149,10 @@ const teacherInfo = reactive({
   gender: '男',
   phone: '13800138000',
   courses: ['高等数学', '线性代数'],
-  classes: ['计算机2101', '计算机2102']
 })
 
 // 所有可选课程和班级
 const allCourses = ref(['高等数学', '线性代数', '概率统计', '离散数学', '数据结构'])
-const allClasses = ref(['计算机2101', '计算机2102', '计算机2103', '软件工程2101', '人工智能2101'])
 
 // 编辑状态
 const editing = ref(false)

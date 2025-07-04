@@ -26,8 +26,6 @@ export const useAuthStore = defineStore('auth', () => {
   }
   return {
     token,
-    // username,
-    // role,
     isAuthenticated,
     userInfo,
     setToken,
@@ -35,4 +33,6 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     logout
   }
-})
+},
+  { persist: true } // 持久化存储
+)

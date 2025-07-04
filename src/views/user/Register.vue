@@ -184,8 +184,7 @@ const handleAvatarUpload = (file) => {
   // 使用上传接口
   uploadFile(file.raw).then(response => {
     if (response) {
-      // 在返回的URL前添加/upload前缀
-      const avatarUrl = `upload/${response.file}`
+      const avatarUrl = response.url
       console.log('上传的头像URL:', avatarUrl)
       registerForm.value.avatar = avatarUrl
     } else {
