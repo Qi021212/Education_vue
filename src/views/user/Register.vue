@@ -251,12 +251,6 @@ const handleRegister = async () => {
 
     console.log('注册表单数据:', registerForm.value)
     const { confirmPassword, ...submitData } = registerForm.value
-    // const formData = new FormData()
-    // for (const key in registerForm.value) { 
-    //   if (registerForm.value[key] !== null) {
-    //     formData.append(key, registerForm.value[key])
-    //   }
-    // }
     console.log('提交的表单数据:', submitData)
     let response
     if (registerForm.value.role === 'admin') {

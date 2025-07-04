@@ -45,14 +45,6 @@ export const teacherLogin = async (data) => {
     }
 };
 
-// 获取教师信息
-export const getTeacherInfo = () => {
-    return request({
-        url: '/teacher/info',
-        method: 'get'
-    })
-}
-
 // 管理员注册
 export const adminRegister = (data) => {
     return axios({
@@ -61,6 +53,7 @@ export const adminRegister = (data) => {
         data
     })
 }
+
 // 教师注册
 export const teacherRegister = (data) => {
     return axios({
@@ -69,3 +62,64 @@ export const teacherRegister = (data) => {
         data
     })
 }
+
+// 修改教师密码
+export const changeTeacherPassword = async (data) => {
+    try {
+        const response = await request.post('/teacher/resetPass',
+            null, // 请求体为空
+            {
+                params: {
+                    username: data.username,
+                    newPassword: data.newPassword,
+                },
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            }
+        );
+        return response;
+    } catch (error) {
+        throw new Error(error);
+    }
+}
+
+// 修改教师信息
+export const updateTeacherInfo = async (data) => {
+    try {
+        const response = await request.post('/teacher/update',
+            data, // 请求体包含教师信息
+            {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+        return response;
+    } catch (error) {
+        throw new Error(error);
+    }
+}
+
+// 修改管理员密码?
+export const changeAdminPassword = async (data) => {
+    try {
+        const response = await request.post('/users/resetPass',
+            null, // 请求体为空
+            {
+                params: {
+                    username: data.username,
+                    newPassword: data.newPassword,
+                },
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            }
+        );
+        return response;
+    } catch (error) {
+        throw new Error(error);
+    }
+}
+
+

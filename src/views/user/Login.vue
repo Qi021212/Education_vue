@@ -81,6 +81,7 @@ const handleLogin = async () => {
             // 登录成功，更新store状态
             authStore.setToken(response.token)
             authStore.login(response.data)
+            console.log('登录成功:', response.data)
             // 跳转到首页
             ElMessage.success('登录成功')
             router.push('/main')

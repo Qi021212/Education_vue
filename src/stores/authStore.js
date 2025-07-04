@@ -24,6 +24,11 @@ export const useAuthStore = defineStore('auth', () => {
     userInfo.value = {};
     isAuthenticated.value = false;
   }
+
+  const updateUserInfo = (newUserInfo) => {
+    userInfo.value = { ...userInfo.value, ...newUserInfo }
+  }
+  
   return {
     token,
     isAuthenticated,
@@ -31,7 +36,8 @@ export const useAuthStore = defineStore('auth', () => {
     setToken,
     removeToken,
     login,
-    logout
+    logout,
+    updateUserInfo
   }
 },
   { persist: true } // 持久化存储
