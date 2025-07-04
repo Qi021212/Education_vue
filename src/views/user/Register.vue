@@ -65,13 +65,16 @@
 
         <el-form-item prop="gender">
           <el-radio-group v-model="registerForm.gender">
-            <el-radio label="male">男</el-radio>
-            <el-radio label="female">女</el-radio>
+            <el-radio label="男">男</el-radio>
+            <el-radio label="女">女</el-radio>
           </el-radio-group>
         </el-form-item>
 
         <el-form-item prop="course">
-          <el-input v-model="registerForm.course" placeholder="请输入所授课程名称"></el-input>
+          <el-select v-model="registerForm.course" multiple filterable placeholder="请选择所授课程" style="width: 100%">
+            <el-option v-for="item in courseOptions" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+          <!-- <el-input v-model="registerForm.course" placeholder="请输入所授课程名称"></el-input> -->
         </el-form-item>
 
         <el-form-item prop="avatar">
@@ -93,7 +96,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { User, Lock } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -110,7 +113,7 @@ const registerForm = ref({
   gender: 'male',
   avatar: 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png',
   tel: '',
-  course: ''
+  course: [],
 })
 
 const accountFormRef = ref(null)
@@ -156,14 +159,11 @@ const infoRules = {
     { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur' }
   ],
   course: [
-    { required: true, message: '请输入课程名称', trigger: 'blur' }
+    { required: true, message: '请选择课程', trigger: 'blur' }
   ],
   gender: [
     { required: true, message: '请选择性别', trigger: 'change' }
   ],
-  // avatar: [
-  //   { required: true, message: '请上传头像', trigger: 'change' }
-  // ]
 }
 
 import { uploadFile } from '@/api/file'
@@ -206,6 +206,28 @@ const handleAvatarUpload = (file) => {
   reader.readAsDataURL(file.raw)
 }
 
+// 课程选项
+const courseOptions = ref([])
+// 获取课程列表
+import { getCourseList } from '@/api/course'
+const fetchCourseList = async () => {
+  try {
+    const response = await getCourseList()
+    console.log('获取课程列表响应:', response.data.list)
+    if (response && response.code === 200 && Array.isArray(response.data.list)) {
+      courseOptions.value = response.data.list.map(item => ({
+        value: item.id,    // 使用课程ID作为value
+        label: item.course // 使用课程名称作为label
+      }))
+    } else {
+      ElMessage.error('获取课程列表失败: 无效的响应格式')
+    }
+  } catch (error) {
+    console.error('获取课程列表错误:', error)
+    ElMessage.error('获取课程列表失败: ' + (error.message || '网络错误'))
+  }
+}
+
 // 下一步
 const nextStep = () => {
   accountFormRef.value.validate((valid) => {
@@ -219,6 +241,7 @@ const nextStep = () => {
 const prevStep = () => {
   currentStep.value = 1
 }
+
 import { teacherRegister, adminRegister } from '@/api/user'
 // 提交注册
 const handleRegister = async () => {
@@ -256,6 +279,10 @@ const handleRegister = async () => {
 const redirectToLogin = () => {
   router.push('/login')
 }
+
+onMounted(() => {
+  fetchCourseList()
+})
 </script>
 
 <style scoped>
@@ -363,6 +390,10 @@ h2 {
   margin-left: 15%;
   display: flex;
   justify-content: space-between;
+}
+
+.el-select {
+  width: 100%;
 }
 
 @media screen and (max-width: 768px) {

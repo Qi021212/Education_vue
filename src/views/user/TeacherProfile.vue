@@ -5,22 +5,20 @@
       <div class="profile-header">
         <h2>教师个人信息</h2>
       </div>
-      
+
       <div class="profile-content">
         <!-- 左侧头像 -->
         <div class="avatar-section">
-          <el-upload
-            class="avatar-uploader"
-            action="/api/upload"
-            :show-file-list="false"
-            :on-success="handleAvatarSuccess"
-            :before-upload="beforeAvatarUpload">
+          <el-upload class="avatar-uploader" action="/api/upload" :show-file-list="false"
+            :on-success="handleAvatarSuccess" :before-upload="beforeAvatarUpload">
             <img v-if="teacherInfo.avatar" :src="teacherInfo.avatar" class="avatar">
-            <el-icon v-else class="avatar-uploader-icon"><User /></el-icon>
+            <el-icon v-else class="avatar-uploader-icon">
+              <User />
+            </el-icon>
           </el-upload>
           <div class="teacher-id">工号: {{ teacherInfo.teacherId }}</div>
         </div>
-        
+
         <!-- 右侧信息 -->
         <div class="info-section">
           <el-descriptions :column="1" border>
@@ -28,7 +26,7 @@
               <el-input v-if="editing" v-model="teacherInfo.name" />
               <span v-else>{{ teacherInfo.name }}</span>
             </el-descriptions-item>
-            
+
             <el-descriptions-item label="性别">
               <el-radio-group v-if="editing" v-model="teacherInfo.gender">
                 <el-radio label="男">男</el-radio>
@@ -36,96 +34,70 @@
               </el-radio-group>
               <span v-else>{{ teacherInfo.gender }}</span>
             </el-descriptions-item>
-            
+
             <el-descriptions-item label="联系电话">
               <el-input v-if="editing" v-model="teacherInfo.phone" />
               <span v-else>{{ teacherInfo.phone }}</span>
             </el-descriptions-item>
-            
+
             <el-descriptions-item label="所授课程">
-              <el-select
-                v-if="editing"
-                v-model="teacherInfo.courses"
-                multiple
-                filterable
-                allow-create
-                placeholder="请选择或输入课程"
-                style="width: 100%">
-                <el-option
-                  v-for="course in allCourses"
-                  :key="course"
-                  :label="course"
-                  :value="course" />
+              <el-select v-if="editing" v-model="teacherInfo.courses" multiple filterable allow-create
+                placeholder="请选择或输入课程" style="width: 100%">
+                <el-option v-for="course in allCourses" :key="course" :label="course" :value="course" />
               </el-select>
               <div v-else class="tags-container">
-                <el-tag
-                  v-for="course in teacherInfo.courses"
-                  :key="course"
-                  type="info"
-                  size="small"
-                  class="course-tag">
+                <el-tag v-for="course in teacherInfo.courses" :key="course" type="info" size="small" class="course-tag">
                   {{ course }}
                 </el-tag>
               </div>
             </el-descriptions-item>
-            
+
           </el-descriptions>
         </div>
       </div>
-      
+
       <div class="profile-actions">
-        <el-button
-          v-if="!editing"
-          type="primary"
-          @click="startEditing">
-          <el-icon><Edit /></el-icon> 编辑信息
+        <el-button v-if="!editing" type="primary" @click="startEditing">
+          <el-icon>
+            <Edit />
+          </el-icon> 编辑信息
         </el-button>
-        
+
         <template v-else>
           <el-button @click="cancelEditing">
-            <el-icon><Close /></el-icon> 取消
+            <el-icon>
+              <Close />
+            </el-icon> 取消
           </el-button>
           <el-button type="primary" @click="saveProfile">
-            <el-icon><Check /></el-icon> 保存修改
+            <el-icon>
+              <Check />
+            </el-icon> 保存修改
           </el-button>
         </template>
-        
+
         <el-button @click="showChangePasswordDialog">
-          <el-icon><Lock /></el-icon> 修改密码
+          <el-icon>
+            <Lock />
+          </el-icon> 修改密码
         </el-button>
       </div>
     </el-card>
 
     <!-- 修改密码对话框 -->
-    <el-dialog
-      v-model="passwordDialogVisible"
-      title="修改密码"
-      width="500px">
-      <el-form
-        :model="passwordForm"
-        :rules="passwordRules"
-        ref="passwordFormRef"
-        label-width="100px">
+    <el-dialog v-model="passwordDialogVisible" title="修改密码" width="500px">
+      <el-form :model="passwordForm" :rules="passwordRules" ref="passwordFormRef" label-width="100px">
         <el-form-item label="当前密码" prop="currentPassword">
-          <el-input
-            v-model="passwordForm.currentPassword"
-            type="password"
-            show-password />
+          <el-input v-model="passwordForm.currentPassword" type="password" show-password />
         </el-form-item>
         <el-form-item label="新密码" prop="newPassword">
-          <el-input
-            v-model="passwordForm.newPassword"
-            type="password"
-            show-password />
+          <el-input v-model="passwordForm.newPassword" type="password" show-password />
         </el-form-item>
         <el-form-item label="确认密码" prop="confirmPassword">
-          <el-input
-            v-model="passwordForm.confirmPassword"
-            type="password"
-            show-password />
+          <el-input v-model="passwordForm.confirmPassword" type="password" show-password />
         </el-form-item>
       </el-form>
-      
+
       <template #footer>
         <el-button @click="passwordDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="submitPasswordChange">确认修改</el-button>
@@ -341,7 +313,8 @@ const submitPasswordChange = () => {
   gap: 5px;
 }
 
-.course-tag, .class-tag {
+.course-tag,
+.class-tag {
   margin-right: 5px;
   margin-bottom: 5px;
 }
@@ -358,16 +331,16 @@ const submitPasswordChange = () => {
   .profile-content {
     flex-direction: column;
   }
-  
+
   .avatar-section {
     width: 100%;
     margin-bottom: 20px;
   }
-  
+
   .profile-actions {
     flex-direction: column;
   }
-  
+
   .profile-actions .el-button {
     width: 100%;
     margin-bottom: 10px;
