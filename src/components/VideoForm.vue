@@ -4,14 +4,14 @@
             <el-form-item label="标题" prop="title">
                 <el-input v-model="formData.title" placeholder="请输入标题" />
             </el-form-item>
-            <el-form-item label="课程类别" prop="category">
-                <el-select v-model="formData.category" placeholder="请选择课程类别" style="width: 100%">
+            <el-form-item label="课程类别" prop="course">
+                <el-select v-model="formData.course" placeholder="请选择课程类别" style="width: 100%">
                     <el-option v-for="item in categories" :key="item.value" :label="item.label" :value="item.value" />
                 </el-select>
             </el-form-item>
             <el-form-item label="封面">
-                <el-upload class="avatar-uploader" action="/api/upload/image" :show-file-list="false"
-                    :on-success="handleCoverSuccess" :before-upload="beforeCoverUpload">
+                <el-upload class="avatar-uploader" action="#" :show-file-list="false" :on-change="handlePictureUpload"
+                    :auto-upload="false">
                     <img v-if="formData.cover" :src="formData.cover" class="avatar" />
                     <el-icon v-else class="avatar-uploader-icon">
                         <Plus />
@@ -19,19 +19,16 @@
                 </el-upload>
             </el-form-item>
             <el-form-item label="教学视频" prop="video">
-                <el-upload class="upload-demo" action="/api/upload/video" :limit="1" :on-success="handleVideoSuccess"
-                    :file-list="formData.video ? [{ name: '视频文件', url: formData.video }] : []">
+                <el-upload class="upload-demo" action="#" :limit="1" :on-change="handleVideoUpload"
+                    :auto-upload="false">
                     <el-button type="primary">点击上传</el-button>
                     <template #tip>
                         <div class="el-upload__tip">请上传MP4格式的教学视频</div>
                     </template>
                 </el-upload>
             </el-form-item>
-            <el-form-item label="视频时长(秒)" prop="duration">
-                <el-input-number v-model="formData.duration" :min="0" :step="1" />
-            </el-form-item>
-            <el-form-item label="内容" prop="content">
-                <el-input v-model="formData.content" type="textarea" :rows="5" placeholder="请输入内容描述" />
+            <el-form-item label="内容" prop="intro">
+                <el-input v-model="formData.intro" type="textarea" :rows="5" placeholder="请输入内容描述" />
             </el-form-item>
         </el-form>
         <template #footer>
@@ -72,32 +69,38 @@ watch(visible, (val) => {
 
 const rules = reactive({
     title: [{ required: true, message: '标题不能为空', trigger: 'blur' }],
-    category: [{ required: true, message: '请选择课程类别', trigger: 'change' }],
+    course: [{ required: true, message: '请选择课程类别', trigger: 'change' }],
     video: [{ required: true, message: '请上传教学视频', trigger: 'change' }],
-    duration: [{ required: true, message: '请输入视频时长', trigger: 'blur' }],
-    content: [{ required: true, message: '内容不能为空', trigger: 'blur' }]
+    intro: [{ required: true, message: '内容不能为空', trigger: 'blur' }]
 })
 
-const handleCoverSuccess = (response, file) => {
-    props.formData.cover = URL.createObjectURL(file.raw)
+import { uploadFile } from '@/api/file'
+// 处理图片上传
+const handlePictureUpload = (file) => {
+  uploadFile(file.raw)
+    .then((response) => {
+      const newFormData = { ...props.formData, cover: response.url };
+      emit('update:formData', newFormData);
+    })
+    .catch((error) => {
+      console.error('图片上传错误:', error);
+      ElMessage.error('图片上传失败');
+    });
 }
 
-const beforeCoverUpload = (file) => {
-    const isImage = file.type.startsWith('image/')
-    const isLt2M = file.size / 1024 / 1024 < 2
-
-    if (!isImage) {
-        ElMessage.error('上传文件必须是图片格式!')
+// 处理视频上传
+const handleVideoUpload = (file) => {
+    uploadFile(file.raw)
+        .then((response) => {
+        console.log('视频上传成功:', response);
+        const newFormData = { ...props.formData, video: response.url };
+        emit('update:formData', newFormData);
+        })
+        .catch((error) => {
+        console.error('视频上传错误:', error);
+        ElMessage.error('视频上传失败');
+        });
     }
-    if (!isLt2M) {
-        ElMessage.error('上传图片大小不能超过 2MB!')
-    }
-    return isImage && isLt2M
-}
-
-const handleVideoSuccess = (response, file) => {
-    props.formData.video = response.url || URL.createObjectURL(file.raw)
-}
 
 const submitForm = () => {
     formRef.value.validate((valid) => {

@@ -14,7 +14,7 @@
                         <el-input v-model="listQuery.title" placeholder="请输入标题" clearable @keyup.enter="handleSearch" />
                     </el-form-item>
                     <el-form-item label="课程类别">
-                        <el-select v-model="listQuery.category" placeholder="请选择课程类别" clearable>
+                        <el-select v-model="listQuery.course" placeholder="请选择课程类别" clearable>
                             <el-option v-for="item in categories" :key="item.value" :label="item.label"
                                 :value="item.value" />
                         </el-select>
@@ -53,10 +53,7 @@
                         <span class="title-link" @click="handleView(row)">{{ row.title }}</span>
                     </template>
                 </el-table-column>
-                <el-table-column label="课程类别" prop="category" width="120" align="center" sortable="custom">
-                    <template #default="{ row }">
-                        {{ getCategoryLabel(row.category) }}
-                    </template>
+                <el-table-column label="课程类别" prop="course" width="120" align="center" sortable="custom">
                 </el-table-column>
                 <el-table-column label="封面" width="150" align="center">
                     <template #default="{ row }">
@@ -72,14 +69,14 @@
                         </el-button>
                     </template>
                 </el-table-column>
-                <el-table-column label="发布时间" prop="publishTime" width="160" align="center" sortable="custom">
+                <el-table-column label="发布时间" prop="addtime" width="160" align="center" sortable="custom">
                     <template #default="{ row }">
-                        {{ formatTime(row.publishTime) }}
+                        {{ formatTime(row.addtime) }}
                     </template>
                 </el-table-column>
-                <el-table-column label="点击次数" prop="clickCount" width="120" align="center" sortable="custom" />
-                <el-table-column label="评论数" prop="commentCount" width="100" align="center" sortable="custom" />
-                <el-table-column label="收藏数" prop="favoriteCount" width="100" align="center" sortable="custom" />
+                <el-table-column label="点击次数" prop="clicknum" width="120" align="center" sortable="custom" />
+                <el-table-column label="评论数" prop="discussnum" width="100" align="center" sortable="custom" />
+                <el-table-column label="收藏数" prop="storeupnum" width="100" align="center" sortable="custom" />
                 <el-table-column label="操作" width="220" align="center" fixed="right">
                     <template #default="{ row }">
                         <el-button type="primary" size="small" @click="handleView(row)">
@@ -105,25 +102,24 @@
 
         <!-- 添加/编辑表单 -->
         <VideoForm v-model="formDialogVisible" :title="formTitle" :form-data="currentItem" :categories="categories"
-            @submit="handleFormSubmit" />
+            @submit="handleFormSubmit" @update:formData="handleFormDataUpdate" />
 
         <!-- 查看详情对话框 -->
         <el-dialog v-model="detailDialogVisible" title="教学视频详情" width="70%">
             <el-descriptions :column="2" border>
                 <el-descriptions-item label="标题">{{ currentItem.title }}</el-descriptions-item>
-                <el-descriptions-item label="课程类别">{{ getCategoryLabel(currentItem.category) }}</el-descriptions-item>
-                <el-descriptions-item label="发布时间">{{ formatTime(currentItem.publishTime) }}</el-descriptions-item>
-                <el-descriptions-item label="点击次数">{{ currentItem.clickCount }}</el-descriptions-item>
-                <el-descriptions-item label="评论数">{{ currentItem.commentCount }}</el-descriptions-item>
-                <el-descriptions-item label="收藏数">{{ currentItem.favoriteCount }}</el-descriptions-item>
-                <el-descriptions-item label="视频时长">{{ formatDuration(currentItem.duration) }}</el-descriptions-item>
+                <el-descriptions-item label="课程类别">{{ currentItem.course }}</el-descriptions-item>
+                <el-descriptions-item label="发布时间">{{ formatTime(currentItem.addtime) }}</el-descriptions-item>
+                <el-descriptions-item label="点击次数">{{ currentItem.clicknum }}</el-descriptions-item>
+                <el-descriptions-item label="评论数">{{ currentItem.discussnum }}</el-descriptions-item>
+                <el-descriptions-item label="收藏数">{{ currentItem.storeupnum }}</el-descriptions-item>
                 <el-descriptions-item label="封面" :span="2">
                     <el-image v-if="currentItem.cover" style="width: 200px; height: 150px" :src="currentItem.cover"
                         fit="cover" />
                     <span v-else>无封面</span>
                 </el-descriptions-item>
                 <el-descriptions-item label="内容" :span="2">
-                    <div class="content-box">{{ currentItem.content }}</div>
+                    <div class="content-box">{{ currentItem.intro }}</div>
                 </el-descriptions-item>
             </el-descriptions>
             <template #footer>
@@ -151,55 +147,53 @@ import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Delete } from '@element-plus/icons-vue'
 import VideoForm from '@/components/VideoForm.vue'
+import { useAuthStore } from '@/stores/authStore'
+const authStore = useAuthStore()
 
 // 课程类别选项
-const categories = [
-    { value: 'math', label: '数学' },
-    { value: 'english', label: '英语' },
-    { value: 'computer', label: '计算机' },
-    { value: 'physics', label: '物理' },
-    { value: 'chemistry', label: '化学' }
-]
-
-// 获取类别标签
-const getCategoryLabel = (value) => {
-    const category = categories.find(item => item.value === value)
-    return category ? category.label : value
+const categories = ref([])
+import { getCourseList, getTeacherCourseList } from '@/api/course'
+const fetchTeacherCourseList = async () => {
+    try {
+        const response = await getTeacherCourseList(authStore.token)
+        if (response && Array.isArray(response)) {
+            categories.value = response.map(item => ({
+                value: item.course,    // 使用课程ID作为value
+                label: item.course // 使用课程名称作为label
+            }))
+        } else {
+            ElMessage.error('获取课程列表失败: 无效的响应格式')
+        }
+    } catch (error) {
+        console.error('获取课程列表错误:', error)
+        ElMessage.error('获取课程列表失败: ' + (error.message || '网络错误'))
+    }
 }
 
-// 模拟数据生成
-const generateVideos = () => {
-    const videos = []
-    const now = new Date()
-    const videoUrls = '/videos/AAA.mp4'
-
-    for (let i = 1; i <= 35; i++) {
-        const categoryIndex = i % categories.length
-        const duration = Math.floor(Math.random() * 3600) + 600 // 10-60分钟的视频
-        videos.push({
-            id: i,
-            title: `教学视频标题${i}`,
-            category: categories[categoryIndex].value,
-            cover: `https://picsum.photos/300/200?random=${i}`,
-            videoUrl: videoUrls,
-            duration: duration,
-            publishTime: new Date(
-                now.getFullYear(),
-                now.getMonth(),
-                now.getDate() - Math.floor(Math.random() * 30)
-            ).toISOString(),
-            clickCount: Math.floor(Math.random() * 500),
-            commentCount: Math.floor(Math.random() * 50),
-            favoriteCount: Math.floor(Math.random() * 200),
-            content: `这是第${i}个教学视频的内容描述，包含相关课程的知识点和讲解。`
-        })
+// 获取数据
+const videoData = ref([])
+import { getTeachingVideoList } from '@/api/teaching'
+const fetchVideoData = async () => {
+    try {
+        const response = await getTeachingVideoList(authStore.userInfo.t_username)
+        if (response && Array.isArray(response)) {
+            videoData.value = response.map(item => ({
+                ...item,
+                addtime: item.addtime || new Date().toISOString(), // 确保有时间戳
+                clicknum: item.clicknum || 0,
+                discussnum: item.discussnum || 0,
+                storeupnum: item.storeupnum || 0
+            }))
+        } else {
+            ElMessage.error('获取教学视频列表失败: 无效的响应格式')
+        }
+    } catch (error) {
+        console.error('获取教学视频列表错误:', error)
+        ElMessage.error('获取教学视频列表失败: ' + (error.message || '网络错误'))
     }
-
-    return videos
 }
 
 // 数据状态
-const videoData = ref(generateVideos())
 const videoList = ref([])
 const loading = ref(false)
 const selectedItems = ref([])
@@ -209,7 +203,7 @@ const listQuery = reactive({
     page: 1,
     size: 10,
     title: '',
-    category: '',
+    course: '',
     sort: '',
     order: ''
 })
@@ -238,6 +232,7 @@ watch(videoDialogVisible, (visible) => {
 
 // 获取数据
 const fetchData = () => {
+    fetchVideoData()
     loading.value = true
 
     // 模拟API请求延迟
@@ -251,9 +246,9 @@ const fetchData = () => {
             )
         }
 
-        if (listQuery.category) {
+        if (listQuery.course) {
             filteredData = filteredData.filter(
-                item => item.category === listQuery.category
+                item => item.course === listQuery.course
             )
         }
 
@@ -306,13 +301,11 @@ const handleSelectionChange = (items) => {
 // 创建新视频
 const handleCreate = () => {
     currentItem.value = {
-        id: undefined,
         title: '',
-        category: '',
+        course: '',
         cover: '',
-        videoUrl: '',
-        duration: 0,
-        content: ''
+        video: '',
+        intro: ''
     }
     formTitle.value = '添加教学视频'
     isEditMode.value = false
@@ -327,34 +320,44 @@ const handleEdit = (row) => {
     formDialogVisible.value = true
 }
 
+// 处理表单数据更新
+const handleFormDataUpdate = (newFormData) => {
+    currentItem.value = { ...currentItem.value, ...newFormData }
+}
+
+import { addTeachingVideo, updateTeachingVideo } from '@/api/teaching'
 // 表单提交
-const handleFormSubmit = (formData) => {
-    if (isEditMode.value) {
-        // 更新现有视频
-        const index = videoData.value.findIndex(item => item.id === formData.id)
-        if (index !== -1) {
-            videoData.value[index] = {
-                ...videoData.value[index],
-                ...formData
+const handleFormSubmit = async (formData) => {
+    try {
+        const submitData = {
+            id: isEditMode.value ? currentItem.value.id : null, // 如果是编辑模式，传入ID
+            title: formData.title,
+            course: formData.course,
+            cover: formData.cover,
+            video: formData.video,
+            intro: formData.intro
+        };
+        console.log('提交数据:', submitData);
+        if (isEditMode.value === true) {
+            // 更新现有资料
+            const response = await updateTeachingVideo(submitData);
+            if (response) {
+                fetchData(); // 刷新数据
+                ElMessage.success('资料更新成功');
+            }
+        } else {
+            // 添加新资料
+            const response = await addTeachingVideo(submitData);
+            if (response) {
+                fetchData(); // 刷新数据
+                ElMessage.success('资料添加成功');
             }
         }
-        ElMessage.success('视频更新成功')
-    } else {
-        // 添加新视频
-        const newId = Math.max(...videoData.value.map(item => item.id)) + 1
-        videoData.value.unshift({
-            id: newId,
-            ...formData,
-            publishTime: new Date().toISOString(),
-            clickCount: 0,
-            commentCount: 0,
-            favoriteCount: 0
-        })
-        ElMessage.success('视频添加成功')
+        formDialogVisible.value = false;
+    } catch (error) {
+        console.error('表单提交错误:', error);
+        ElMessage.error('操作失败: ' + (error.message || '网络错误'));
     }
-
-    formDialogVisible.value = false
-    fetchData()
 }
 
 // 查看详情
@@ -365,28 +368,27 @@ const handleView = (row) => {
 
 // 播放视频
 const handlePlayVideo = (row) => {
-    currentVideoUrl.value = row.videoUrl
+    currentVideoUrl.value = row.video
     currentVideoTitle.value = row.title
     videoDialogVisible.value = true
-
-    // 模拟点击次数增加
-    const index = videoData.value.findIndex(item => item.id === row.id)
-    if (index !== -1) {
-        videoData.value[index].clickCount++
-        fetchData()
-    }
 }
 
 // 删除视频
+import { deleteTeachingVideo } from '@/api/teaching'
 const handleDelete = (row) => {
     ElMessageBox.confirm('确认删除该教学视频吗?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
     }).then(() => {
-        videoData.value = videoData.value.filter(item => item.id !== row.id)
-        ElMessage.success('删除成功')
-        fetchData()
+        // 调用API删除资料，传入数组形式的id
+        deleteTeachingVideo([row.id]).then(() => {
+            ElMessage.success('删除成功')
+            fetchData()
+        }).catch(error => {
+            console.error('删除视频失败:', error)
+            ElMessage.error('删除失败: ' + (error.message || '网络错误'))
+        })
     }).catch(() => {
         ElMessage.info('已取消删除')
     })
@@ -400,10 +402,14 @@ const handleBatchDelete = () => {
         cancelButtonText: '取消',
         type: 'warning'
     }).then(() => {
-        videoData.value = videoData.value.filter(item => !ids.includes(item.id))
-        selectedItems.value = []
-        ElMessage.success(`成功删除${ids.length}条视频`)
-        fetchData()
+        deleteTeachingVideo(ids).then(() => {
+            selectedItems.value = []
+            ElMessage.success(`成功删除${ids.length}条视频`)
+            fetchData()
+        }).catch(error => {
+            console.error('批量删除视频失败:', error)
+            ElMessage.error('批量删除失败: ' + (error.message || '网络错误'))
+        })
     }).catch(() => {
         ElMessage.info('已取消删除')
     })
@@ -415,16 +421,11 @@ const formatTime = (time) => {
     return time ? new Date(time).toLocaleString() : ''
 }
 
-// 格式化时长
-const formatDuration = (seconds) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}分${secs}秒`
-}
-
 // 初始化
 onMounted(() => {
     fetchData()
+    fetchTeacherCourseList()
+    fetchVideoData()
 })
 </script>
 
