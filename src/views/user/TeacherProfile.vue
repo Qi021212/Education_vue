@@ -133,7 +133,7 @@ const fetchCourseList = async () => {
     console.log('获取课程列表响应:', response.data.list)
     if (response && response.code === 200 && Array.isArray(response.data.list)) {
       allCourses.value = response.data.list.map(item => ({
-        value: item.id,    // 使用课程ID作为value
+        value: item.course,    // 使用课程ID作为value
         label: item.course // 使用课程名称作为label
       }))
     } else {
@@ -165,7 +165,7 @@ const cancelEditing = () => {
 // 保存个人信息
 import { updateTeacherInfo } from '@/api/user'
 const saveProfile = () => {
-  // 这里应该调用API保存数据
+  console.log('保存个人信息:', teacherInfo)
   updateTeacherInfo(teacherInfo).then(response => {
     if (response && response.code === 200) {
       // 更新store中的用户信息

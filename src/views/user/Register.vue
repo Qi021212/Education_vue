@@ -194,8 +194,6 @@ const handleAvatarUpload = (file) => {
     console.error('头像上传错误:', error)
     ElMessage.error('头像上传失败')
   }).finally(() => {
-    // 验证头像字段
-    infoFormRef.value.validateField('avatar')
   })
 
   // 显示本地预览
@@ -216,7 +214,7 @@ const fetchCourseList = async () => {
     console.log('获取课程列表响应:', response.data.list)
     if (response && response.code === 200 && Array.isArray(response.data.list)) {
       courseOptions.value = response.data.list.map(item => ({
-        value: item.id,    // 使用课程ID作为value
+        value: item.course,    // 使用课程ID作为value
         label: item.course // 使用课程名称作为label
       }))
     } else {

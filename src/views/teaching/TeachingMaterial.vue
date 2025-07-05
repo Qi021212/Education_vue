@@ -14,7 +14,7 @@
             <el-input v-model="listQuery.title" placeholder="请输入标题" clearable @keyup.enter="handleSearch" />
           </el-form-item>
           <el-form-item label="课程类别">
-            <el-select v-model="listQuery.category" placeholder="请选择课程类别" clearable>
+            <el-select v-model="listQuery.course" placeholder="请选择课程类别" clearable>
               <el-option v-for="item in categories" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
           </el-form-item>
@@ -52,11 +52,11 @@
             <span class="title-link" @click="handleView(row)">{{ row.title }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="课程类别" prop="category" width="120" align="center" sortable="custom"> </el-table-column>
+        <el-table-column label="课程类别" prop="course" width="120" align="center" sortable="custom"> </el-table-column>
         <el-table-column label="图片" width="120" align="center">
           <template #default="{ row }">
-            <el-image v-if="row.image" style="width: 80px; height: 60px" :src="row.image"
-              :preview-src-list="[row.image]" fit="cover" preview-teleported hide-on-click-modal />
+            <el-image v-if="row.picture" style="width: 80px; height: 60px" :src="row.picture"
+              :preview-src-list="[row.picture]" fit="cover" preview-teleported hide-on-click-modal />
             <span v-else>无图片</span>
           </template>
         </el-table-column>
@@ -68,14 +68,14 @@
             <span v-else>无附件</span>
           </template>
         </el-table-column>
-        <el-table-column label="发布时间" prop="publishTime" width="160" align="center" sortable="custom">
+        <el-table-column label="发布时间" prop="addtime" width="160" align="center" sortable="custom">
           <template #default="{ row }">
-            {{ formatTime(row.publishTime) }}
+            {{ formatTime(row.addtime) }}
           </template>
         </el-table-column>
-        <el-table-column label="点击次数" prop="clickCount" width="120" align="center" sortable="custom" />
-        <el-table-column label="评论数" prop="commentCount" width="100" align="center" sortable="custom" />
-        <el-table-column label="收藏数" prop="favoriteCount" width="100" align="center" sortable="custom" />
+        <el-table-column label="点击次数" prop="clicknum" width="120" align="center" sortable="custom" />
+        <el-table-column label="评论数" prop="discussnum" width="100" align="center" sortable="custom" />
+        <el-table-column label="收藏数" prop="storeupnum" width="100" align="center" sortable="custom" />
         <el-table-column label="操作" width="220" align="center" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" size="small" @click="handleView(row)">
@@ -101,19 +101,20 @@
 
     <!-- 添加/编辑表单 -->
     <MaterialForm v-model="formDialogVisible" :title="formTitle" :form-data="currentItem" :categories="categories"
-      @submit="handleFormSubmit" />
+      @submit="handleFormSubmit" @update:formData="handleFormDataUpdate" />
 
     <!-- 查看详情对话框 -->
     <el-dialog v-model="detailDialogVisible" title="教学资料详情" width="60%">
       <el-descriptions :column="2" border>
         <el-descriptions-item label="标题">{{ currentItem.title }}</el-descriptions-item>
-        <el-descriptions-item label="课程类别">{{ currentItem.category }}</el-descriptions-item>
-        <el-descriptions-item label="发布时间">{{ formatTime(currentItem.publishTime) }}</el-descriptions-item>
-        <el-descriptions-item label="点击次数">{{ currentItem.clickCount }}</el-descriptions-item>
-        <el-descriptions-item label="评论数">{{ currentItem.commentCount }}</el-descriptions-item>
-        <el-descriptions-item label="收藏数">{{ currentItem.favoriteCount }}</el-descriptions-item>
+        <el-descriptions-item label="课程类别">{{ currentItem.course }}</el-descriptions-item>
+        <el-descriptions-item label="发布时间">{{ formatTime(currentItem.addtime) }}</el-descriptions-item>
+        <el-descriptions-item label="点击次数">{{ currentItem.clicknum }}</el-descriptions-item>
+        <el-descriptions-item label="评论数">{{ currentItem.discussnum }}</el-descriptions-item>
+        <el-descriptions-item label="收藏数">{{ currentItem.storeupnum }}</el-descriptions-item>
         <el-descriptions-item label="图片" :span="2">
-          <el-image v-if="currentItem.image" style="width: 200px; height: 150px" :src="currentItem.image" fit="cover" />
+          <el-image v-if="currentItem.picture" style="width: 200px; height: 150px" :src="currentItem.picture"
+            fit="cover" />
           <span v-else>无图片</span>
         </el-descriptions-item>
         <el-descriptions-item label="附件" :span="2">
@@ -140,49 +141,53 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Delete } from '@element-plus/icons-vue'
 import MaterialForm from '@/components/MaterialForm.vue'
+import { useAuthStore } from '@/stores/authStore'
+const authStore = useAuthStore()
 
 // 课程类别选项
-const categories = [
-  { value: 'math', label: '数学' },
-  { value: 'english', label: '英语' },
-  { value: 'computer', label: '计算机' },
-  { value: 'physics', label: '物理' },
-  { value: 'chemistry', label: '化学' }
-]
-
-// 模拟数据生成
-const generateMaterials = () => {
-  const materials = []
-  const now = new Date()
-
-  for (let i = 1; i <= 35; i++) {
-    const categoryIndex = i % categories.length
-    materials.push({
-      id: i,
-      title: `教学资料标题${i}`,
-      category: categories[categoryIndex].value,
-      image: `https://picsum.photos/200/150?random=${i}`,
-      attachment: {
-        name: `资料_${i}.pdf`,
-        url: `https://example.com/files/material_${i}.pdf`
-      },
-      publishTime: new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate() - Math.floor(Math.random() * 30)
-      ).toISOString(),
-      clickCount: Math.floor(Math.random() * 500),
-      commentCount: Math.floor(Math.random() * 50),
-      favoriteCount: Math.floor(Math.random() * 200),
-      content: `这是第${i}个教学资料的内容，包含相关课程的知识点和讲解。`
-    })
+const categories = ref([])
+import { getCourseList, getTeacherCourseList } from '@/api/course'
+const fetchTeacherCourseList = async () => {
+  try {
+    const response = await getTeacherCourseList(authStore.token)
+    if (response && Array.isArray(response)) {
+      categories.value = response.map(item => ({
+        value: item.course,    // 使用课程ID作为value
+        label: item.course // 使用课程名称作为label
+      }))
+    } else {
+      ElMessage.error('获取课程列表失败: 无效的响应格式')
+    }
+  } catch (error) {
+    console.error('获取课程列表错误:', error)
+    ElMessage.error('获取课程列表失败: ' + (error.message || '网络错误'))
   }
+}
 
-  return materials
+// 获取数据
+const materialData = ref([])
+import { getTeachingMaterialList } from '@/api/teaching'
+const fetchMaterialData = async () => {
+  try {
+    const response = await getTeachingMaterialList(authStore.userInfo.t_username)
+    if (response && Array.isArray(response)) {
+      materialData.value = response.map(item => ({
+        ...item,
+        addtime: item.addtime || new Date().toISOString(), // 确保有时间戳
+        clicknum: item.clicknum || 0,
+        discussnum: item.discussnum || 0,
+        storeupnum: item.storeupnum || 0
+      }))
+    } else {
+      ElMessage.error('获取教学资料列表失败: 无效的响应格式')
+    }
+  } catch (error) {
+    console.error('获取教学资料列表错误:', error)
+    ElMessage.error('获取教学资料列表失败: ' + (error.message || '网络错误'))
+  }
 }
 
 // 数据状态
-const materialData = ref(generateMaterials())
 const materialList = ref([])
 const loading = ref(false)
 const selectedItems = ref([])
@@ -192,7 +197,7 @@ const listQuery = reactive({
   page: 1,
   size: 10,
   title: '',
-  category: '',
+  course: '',
   sort: '',
   order: ''
 })
@@ -214,6 +219,7 @@ const formatTime = (time) => {
 
 // 获取数据
 const fetchData = () => {
+  fetchMaterialData()
   loading.value = true
 
   // 模拟API请求延迟
@@ -227,9 +233,9 @@ const fetchData = () => {
       )
     }
 
-    if (listQuery.category) {
+    if (listQuery.course) {
       filteredData = filteredData.filter(
-        item => item.category === listQuery.category
+        item => item.course === listQuery.course
       )
     }
 
@@ -263,7 +269,7 @@ const handleSearch = () => {
 // 重置搜索
 const resetSearch = () => {
   listQuery.title = ''
-  listQuery.category = ''
+  listQuery.course = ''
   handleSearch()
 }
 
@@ -282,12 +288,15 @@ const handleSelectionChange = (items) => {
 // 创建新资料
 const handleCreate = () => {
   currentItem.value = {
-    id: undefined,
     title: '',
-    category: '',
-    image: '',
+    course: '',
+    picture: '',
     attachment: null,
-    content: ''
+    content: '',
+    addtime: new Date().toISOString(),
+    clicknum: 0,
+    discussnum: 0,
+    storeupnum: 0
   }
   formTitle.value = '添加教学资料'
   isEditMode.value = false
@@ -302,34 +311,44 @@ const handleEdit = (row) => {
   formDialogVisible.value = true
 }
 
+// 处理表单数据更新
+const handleFormDataUpdate = (newFormData) => {
+  currentItem.value = { ...currentItem.value, ...newFormData }
+}
+
+import { addTeachingMaterial, updateTeachingMaterial } from '@/api/teaching'
 // 表单提交
-const handleFormSubmit = (formData) => {
-  if (isEditMode.value) {
-    // 更新现有资料
-    const index = materialData.value.findIndex(item => item.id === formData.id)
-    if (index !== -1) {
-      materialData.value[index] = {
-        ...materialData.value[index],
-        ...formData
+const handleFormSubmit = async (formData) => {
+  try {
+    const submitData = {
+      id: isEditMode.value ? currentItem.value.id : null, // 如果是编辑模式，传入ID
+      title: formData.title,
+      course: formData.course,
+      picture: formData.picture,
+      attachment: formData.attachment,
+      content: formData.content
+    };
+    console.log('提交数据:', submitData);
+    if (isEditMode.value === true) {
+      // 更新现有资料
+      const response = await updateTeachingMaterial(submitData);
+      if (response) {
+        fetchData(); // 刷新数据
+        ElMessage.success('资料更新成功');
+      }
+    } else {
+      // 添加新资料
+      const response = await addTeachingMaterial(submitData);
+      if (response) {
+        fetchData(); // 刷新数据
+        ElMessage.success('资料添加成功');
       }
     }
-    ElMessage.success('资料更新成功')
-  } else {
-    // 添加新资料
-    const newId = Math.max(...materialData.value.map(item => item.id)) + 1
-    materialData.value.unshift({
-      id: newId,
-      ...formData,
-      publishTime: new Date().toISOString(),
-      clickCount: 0,
-      commentCount: 0,
-      favoriteCount: 0
-    })
-    ElMessage.success('资料添加成功')
+    formDialogVisible.value = false;
+  } catch (error) {
+    console.error('表单提交错误:', error);
+    ElMessage.error('操作失败: ' + (error.message || '网络错误'));
   }
-
-  formDialogVisible.value = false
-  fetchData()
 }
 
 // 查看详情
@@ -339,27 +358,82 @@ const handleView = (row) => {
 }
 
 // 下载附件
-const handleDownload = (attachment) => {
-  // 模拟下载
-  const link = document.createElement('a')
-  link.href = attachment.url
-  link.download = attachment.name
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  ElMessage.success('开始下载附件')
-}
+const handleDownload = async (attachment) => {
+  try {
+    // 检查附件是否存在
+    if (!attachment) {
+      ElMessage.warning('没有可下载的附件');
+      return;
+    }
+
+    let downloadUrl = '';
+    let filename = 'download';
+
+    // 处理不同类型的附件数据
+    if (typeof attachment === 'string') {
+      // 处理旧数据：只有URL字符串的情况
+      downloadUrl = attachment;
+      filename = attachment.split('/').pop() || filename;
+    } else if (attachment.url) {
+      // 处理新数据：包含url和name的对象
+      downloadUrl = attachment.url;
+      filename = attachment.name || attachment.url.split('/').pop() || filename;
+    } else {
+      ElMessage.error('附件格式不支持');
+      return;
+    }
+
+    // 检查URL是否有效
+    if (!downloadUrl.startsWith('http') && !downloadUrl.startsWith('/')) {
+      ElMessage.error('附件URL格式不正确');
+      return;
+    }
+
+    // 创建下载链接
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = filename;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+
+    // 处理下载完成/失败事件
+    link.onload = () => {
+      clearTimeout(timeout);
+      document.body.removeChild(link);
+      ElMessage.success('下载开始');
+    };
+
+    link.onerror = () => {
+      clearTimeout(timeout);
+      document.body.removeChild(link);
+      ElMessage.error('下载失败，请检查附件链接');
+    };
+
+    // 触发下载
+    link.click();
+
+  } catch (error) {
+    console.error('下载附件出错:', error);
+    ElMessage.error(`下载失败: ${error.message || '未知错误'}`);
+  }
+};
 
 // 删除资料
+import { deleteTeachingMaterial } from '@/api/teaching'
 const handleDelete = (row) => {
   ElMessageBox.confirm('确认删除该教学资料吗?', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
   }).then(() => {
-    materialData.value = materialData.value.filter(item => item.id !== row.id)
-    ElMessage.success('删除成功')
-    fetchData()
+    // 调用API删除资料，传入数组形式的id
+    deleteTeachingMaterial([row.id]).then(() => {
+      ElMessage.success('删除成功')
+      fetchData()
+    }).catch(error => {
+      console.error('删除资料失败:', error)
+      ElMessage.error('删除失败: ' + (error.message || '网络错误'))
+    })
   }).catch(() => {
     ElMessage.info('已取消删除')
   })
@@ -368,15 +442,25 @@ const handleDelete = (row) => {
 // 批量删除
 const handleBatchDelete = () => {
   const ids = selectedItems.value.map(item => item.id)
+  if (ids.length === 0) {
+    ElMessage.warning('请先选择要删除的资料')
+    return
+  }
+
   ElMessageBox.confirm(`确认删除选中的${ids.length}条教学资料吗?`, '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
   }).then(() => {
-    materialData.value = materialData.value.filter(item => !ids.includes(item.id))
-    selectedItems.value = []
-    ElMessage.success(`成功删除${ids.length}条资料`)
-    fetchData()
+    // 调用API批量删除资料，直接传入ids数组
+    deleteTeachingMaterial(ids).then(() => {
+      selectedItems.value = []
+      ElMessage.success(`成功删除${ids.length}条资料`)
+      fetchData()
+    }).catch(error => {
+      console.error('批量删除资料失败:', error)
+      ElMessage.error('批量删除失败: ' + (error.message || '网络错误'))
+    })
   }).catch(() => {
     ElMessage.info('已取消删除')
   })
@@ -385,6 +469,8 @@ const handleBatchDelete = () => {
 // 初始化
 onMounted(() => {
   fetchData()
+  fetchTeacherCourseList()
+  fetchMaterialData()
 })
 </script>
 
