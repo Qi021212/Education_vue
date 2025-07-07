@@ -4,8 +4,8 @@
       <el-input v-model="formData.title" placeholder="请输入作业名称" />
     </el-form-item>
     
-    <el-form-item label="课程类别" prop="category" required>
-      <el-select v-model="formData.category" placeholder="请选择课程类别">
+    <el-form-item label="课程类别" prop="course" required>
+      <el-select v-model="formData.course" placeholder="请选择课程类别">
         <el-option 
           v-for="item in categories" 
           :key="item.value" 
@@ -102,7 +102,6 @@
 <script setup>
 import { ref, computed, defineProps, defineEmits } from 'vue'
 import { Plus } from '@element-plus/icons-vue'
-import QuestionEditor from './QuestionEditor.vue'
 
 const props = defineProps({
   formData: {
