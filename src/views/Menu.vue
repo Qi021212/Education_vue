@@ -155,7 +155,7 @@ const menus = ref([
         icon: UserFilled,
         roles: ['teacher', 'assistant'],
         children: [
-            { title: '在线直播', path: '/live', roles: ['teacher', 'assistant'] },
+            { title: '在线课堂', path: '/live', roles: ['teacher', 'assistant'] },
             { title: '直播记录', path: '/liveRecord', roles: ['teacher', 'assistant'] }
         ]
     }

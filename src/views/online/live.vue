@@ -1,70 +1,77 @@
 <template>
     <div class="agora-container">
-        <h1>声网RTC测试</h1>
-
-        <!-- 频道配置 -->
-        <div class="config-section" v-if="!isJoined">
-            <div class="input-group">
-                <label for="channelName">频道名称:</label>
-                <input id="channelName" v-model="channelName" placeholder="输入频道名称" />
-            </div>
-            <div class="input-group">
-                <label for="tempToken">临时Token:</label>
-                <input id="tempToken" v-model="tempToken" placeholder="输入临时Token" />
-            </div>
-            <div class="input-group">
-                <label for="userRole">用户角色:</label>
-                <select id="userRole" v-model="userRole">
-                    <option value="host">主播</option>
-                    <option value="audience">观众</option>
-                </select>
-            </div>
-            <button @click="joinChannel" class="join-btn">加入频道</button>
-        </div>
-
-        <!-- 视频区域 -->
-        <div class="video-section" v-show="isJoined">
-            <div class="video-container">
-                <h3>本地视频</h3>
-                <div ref="localPlayer" class="video-player"></div>
-                <div class="video-info">
-                    <p>用户ID: {{ localUid }}</p>
-                    <p>状态: {{ isPublished ? '已发布' : '未发布' }}</p>
+        <el-card class="box-card">
+            <template #header>
+                <div class="card-header">
+                    <h3>在线课堂</h3>
                 </div>
+            </template>
+
+
+            <!-- 频道配置 -->
+            <div class="config-section" v-if="!isJoined">
+                <div class="input-group">
+                    <label for="channelName">教室号:</label>
+                    <input id="channelName" v-model="channelName" placeholder="输入教室号" />
+                </div>
+                <div class="input-group">
+                    <label for="tempToken">临时Token:</label>
+                    <input id="tempToken" v-model="tempToken" placeholder="输入临时Token" />
+                </div>
+                <div class="input-group">
+                    <label for="userRole">用户角色:</label>
+                    <select id="userRole" v-model="userRole">
+                        <option value="host">教师</option>
+                        <option value="audience">学生</option>
+                    </select>
+                </div>
+                <button @click="joinChannel" class="join-btn">进入教室</button>
             </div>
 
-            <div class="video-container">
-                <h3>远程用户 ({{ remoteUsers.length }})</h3>
-                <div class="remote-users">
-                    <div v-for="user in remoteUsers" :key="user.uid" class="remote-user">
-                        <div :ref="`remotePlayer_${user.uid}`" class="video-player"></div>
-                        <div class="user-info">用户ID: {{ user.uid }}</div>
+            <!-- 视频区域 -->
+            <div class="video-section" v-show="isJoined">
+                <div class="video-container">
+                    <h3>教师</h3>
+                    <div ref="localPlayer" class="video-player"></div>
+                    <div class="video-info">
+                        <p>用户ID: {{ localUid }}</p>
+                        <p>状态: {{ isPublished ? '已发布' : '未发布' }}</p>
+                    </div>
+                </div>
+
+                <div class="video-container">
+                    <h3>学生 ({{ remoteUsers.length }})</h3>
+                    <div class="remote-users">
+                        <div v-for="user in remoteUsers" :key="user.uid" class="remote-user">
+                            <div :ref="`remotePlayer_${user.uid}`" class="video-player"></div>
+                            <div class="user-info">用户ID: {{ user.uid }}</div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- 控制按钮 -->
-        <div class="control-section" v-if="isJoined">
-            <button @click="toggleMic" :class="{ active: !isMuted }">
-                {{ isMuted ? '开启麦克风' : '关闭麦克风' }}
-            </button>
-            <button @click="toggleCamera" :class="{ active: isCameraOn }">
-                {{ isCameraOn ? '关闭摄像头' : '开启摄像头' }}
-            </button>
-            <button @click="leaveChannel" class="leave-btn">离开频道</button>
-        </div>
+            <!-- 控制按钮 -->
+            <div class="control-section" v-if="isJoined">
+                <button @click="toggleMic" :class="{ active: !isMuted }">
+                    {{ isMuted ? '开启麦克风' : '关闭麦克风' }}
+                </button>
+                <button @click="toggleCamera" :class="{ active: isCameraOn }">
+                    {{ isCameraOn ? '关闭摄像头' : '开启摄像头' }}
+                </button>
+                <button @click="leaveChannel" class="leave-btn">离开频道</button>
+            </div>
 
-        <!-- 状态信息 -->
-        <div class="status-section">
-            <p>连接状态: {{ connectionState }}</p>
-            <p v-if="networkQuality">网络质量: {{ networkQuality }}</p>
-        </div>
+            <!-- 状态信息 -->
+            <div class="status-section">
+                <p>连接状态: {{ connectionState }}</p>
+                <p v-if="networkQuality">网络质量: {{ networkQuality }}</p>
+            </div>
+        </el-card>
     </div>
 </template>
 
 <script>
-import { ref, onUnmounted, nextTick, onMounted } from 'vue';
+import { ref, onUnmounted, nextTick } from 'vue';
 import AgoraRTC from 'agora-rtc-sdk-ng';
 
 export default {
@@ -74,7 +81,7 @@ export default {
         const appId = '6e333687f21748c9abda9127b2fc47b9';
 
         // 状态变量
-        const channelName = ref('test_channel');
+        const channelName = ref('classroom1');
         const tempToken = ref(''); // 从控制台获取的临时Token
         const userRole = ref('host');
         const isJoined = ref(false);
@@ -291,8 +298,10 @@ export default {
 .agora-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 20px;
-    font-family: Arial, sans-serif;
+}
+
+h3 {
+    margin: 0;
 }
 
 .config-section,
