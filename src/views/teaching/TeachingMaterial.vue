@@ -221,7 +221,6 @@ const formatTime = (time) => {
 const fetchData = () => {
   fetchMaterialData()
   loading.value = true
-
   // 模拟API请求延迟
   setTimeout(() => {
     let filteredData = [...materialData.value]
@@ -477,6 +476,11 @@ onMounted(() => {
 <style scoped>
 h3 {
   margin: 0;
+}
+
+.el-select,
+.el-input {
+    width: 150px;
 }
 
 .filter-container {

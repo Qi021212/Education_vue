@@ -29,7 +29,7 @@ export const getHomeworkDetail = async (token, data) => {
                 params: {
                     token: token,
                     sUsername: data.sUsername,
-                    homewokrId: data.homeworkId,
+                    paperid: data.homeworkId,
                 }
             }
         );

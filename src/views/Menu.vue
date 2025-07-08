@@ -12,8 +12,7 @@
             <div class="header-right">
                 <el-dropdown @command="handleCommand">
                     <div class="user-info">
-                        <el-avatar :size="40"
-                            :src="avatarPath" />
+                        <el-avatar :size="40" :src="avatarPath" />
                         <span class="user-name">{{ userInfo.t_name }}</span>
                     </div>
                     <template #dropdown>
@@ -42,7 +41,7 @@
                 <el-menu :default-active="route.path" :collapse="isCollapse" :collapse-transition="false" class="menu"
                     router background-color="#6AAB9C" text-color="#ffffff" active-text-color="#FFE4C7"
                     :unique-opened="true">
-                    <template v-for="menu in menus" :key="menu.title">
+                    <template v-for="menu in filteredMenus" :key="menu.title">
                         <el-sub-menu v-if="menu.children" :index="menu.title">
                             <template #title>
                                 <el-icon>
@@ -74,7 +73,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import {
     ElContainer, ElHeader, ElMain, ElAside, ElMenu,
@@ -83,8 +82,13 @@ import {
 } from 'element-plus'
 import {
     House, Document, Collection, Files, CircleClose, DocumentChecked,
-    Fold, Expand, User
+    Fold, Expand, User,
+    UserFilled
 } from '@element-plus/icons-vue'
+
+import { useAuthStore } from '@/stores/authStore'
+const userInfo = useAuthStore().userInfo
+const avatarPath = userInfo.avatar
 
 const router = useRouter()
 const route = useRouter().currentRoute.value
@@ -95,54 +99,91 @@ const menus = ref([
     {
         title: '主页',
         icon: House,
-        path: '/main'
+        path: '/main',
+        roles: ['teacher', 'assistant', 'admin']
     },
     {
         title: '教学管理',
         icon: Collection,
+        roles: ['teacher', 'admin'],
         children: [
-            { title: '教学资料', path: '/teachingMaterial' },
-            { title: '教学视频', path: '/teachingVideo' }
+            { title: '教学资料', path: '/teachingMaterial', roles: ['teacher', 'admin'] },
+            { title: '教学视频', path: '/teachingVideo', roles: ['teacher', 'admin'] },
+            { title: 'AI智能备课', path: '/aiTeaching', roles: ['teacher'] }
         ]
     },
     {
         title: '作业管理',
         icon: Files,
+        roles: ['teacher', 'assistant'],
         children: [
-            { title: '作业发布记录', path: '/homeworkAssignment' },
-            { title: '作业收取情况', path: '/homeworkCollection' },
+            { title: '作业发布记录', path: '/homeworkAssignment', roles: ['teacher', 'assistant'] },
+            { title: '作业收取情况', path: '/homeworkCollection', roles: ['teacher', 'assistant'] },
         ]
     },
     {
         title: '试题管理',
         icon: Document,
+        roles: ['teacher'],
         children: [
-            { title: '题库管理', path: '/questionBank' },
-            { title: '试卷管理', path: '/testPaper' }
+            { title: '题库管理', path: '/questionBank', roles: ['teacher'] },
+            { title: '试卷管理', path: '/testPaper', roles: ['teacher'] }
         ]
     },
     {
         title: '考试管理',
         icon: DocumentChecked,
+        roles: ['teacher', 'assistant'],
         children: [
-            { title: '在线考试', path: '/exam' },
-            { title: '测试记录', path: '/testRecord' },
-            { title: '成绩分析', path: '/analysis' }
+            { title: '在线考试', path: '/exam', roles: ['teacher'] },
+            { title: '测试记录', path: '/testRecord', roles: ['teacher', 'assistant'] },
+            { title: '成绩分析', path: '/analysis', roles: ['teacher', 'assistant'] }
+        ]
+    },
+    {
+        title: '账号管理',
+        icon: User,
+        roles: ['admin', 'teacher'],
+        children: [
+            { title: '教师账号', path: '/teacherAccount', roles: ['admin','teacher'] },
+            { title: '学生账号', path: '/studentAccount', roles: ['admin'] }
+        ]
+
+    },
+    {
+        title:'教学直播',
+        icon: UserFilled,
+        roles: ['teacher', 'assistant'],
+        children: [
+            { title: '在线直播', path: '/live', roles: ['teacher', 'assistant'] },
+            { title: '直播记录', path: '/liveRecord', roles: ['teacher', 'assistant'] }
         ]
     }
 ])
 
-import { useAuthStore } from '@/stores/authStore'
-const userInfo = useAuthStore().userInfo
-const avatarPath = userInfo.avatar
+// 根据角色过滤菜单
+const filterMenusByRole = (menus, role) => {
+    return menus.filter(menu => {
+        if (menu.roles && !menu.roles.includes(role)) {
+            return false;
+        }
+        if (menu.children) {
+            menu.children = filterMenusByRole(menu.children, role);
+            return menu.children.length > 0;
+        }
+        return true;
+    });
+};
 
+const filteredMenus = computed(() => {
+    return filterMenusByRole(menus.value, userInfo.role);
+});
 
 // 处理下拉菜单命令
 const handleCommand = (command) => {
     if (command === 'logout') {
         handleLogout()
     } else if (command === 'profile') {
-        // 跳转到个人信息页面
         router.push('/teacherProfile')
     }
 }

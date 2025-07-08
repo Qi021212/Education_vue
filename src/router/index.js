@@ -7,9 +7,12 @@ import LayoutVue from '@/views/Menu.vue'
 import MainVue from '@/views/Main.vue'
 import TeachingMaterial from '@/views/teaching/TeachingMaterial.vue'
 import TeachingVideo from '@/views/teaching/TeachingVideo.vue'
+import AITeaching from '@/views/teaching/AITeaching.vue'
 import HomeworkAssignment from '@/views/homework/HomeworkAssignment.vue'
 import HomeworkCollection from '@/views/homework/HomeworkCollection.vue'
 import TeacherProfile from '@/views/user/TeacherProfile.vue'
+import TeacherAccount from '@/views/account/TeacherAccount.vue'
+import live from '@/views/online/live.vue'
 
 //定义路由
 const routes = [
@@ -20,9 +23,12 @@ const routes = [
             { path: '/main', component: MainVue },
             { path: 'teachingMaterial', component: TeachingMaterial },
             { path: 'teachingVideo', component: TeachingVideo },
+            { path: 'aiTeaching', component: AITeaching },
             { path: 'homeworkAssignment', component: HomeworkAssignment },
             { path: 'homeworkCollection', component: HomeworkCollection },
-            { path: 'teacherProfile', component: TeacherProfile }
+            { path: 'teacherProfile', component: TeacherProfile },
+            { path: 'teacherAccount', component: TeacherAccount },
+            { path: 'live', component: live }
 
         ]
     }

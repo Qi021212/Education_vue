@@ -434,6 +434,11 @@ h3 {
     margin: 0;
 }
 
+.el-select,
+.el-input {
+    width: 150px;
+}
+
 .filter-container {
     display: flex;
     justify-content: space-between;
