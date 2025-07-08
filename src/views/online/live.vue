@@ -15,10 +15,6 @@
                     <input id="channelName" v-model="channelName" placeholder="输入教室号" />
                 </div>
                 <div class="input-group">
-                    <label for="tempToken">临时Token:</label>
-                    <input id="tempToken" v-model="tempToken" placeholder="输入临时Token" />
-                </div>
-                <div class="input-group">
                     <label for="userRole">用户角色:</label>
                     <select id="userRole" v-model="userRole">
                         <option value="host">教师</option>
@@ -31,11 +27,12 @@
             <!-- 视频区域 -->
             <div class="video-section" v-show="isJoined">
                 <div class="video-container">
-                    <h3>教师</h3>
+                    <h3>{{ userRole === 'host' ? '教师' : '学生' }}</h3>
                     <div ref="localPlayer" class="video-player"></div>
                     <div class="video-info">
                         <p>用户ID: {{ localUid }}</p>
                         <p>状态: {{ isPublished ? '已发布' : '未发布' }}</p>
+                        <p>当前模式: {{ isScreenSharing ? '屏幕共享' : isCameraOn ? '摄像头' : '未开启视频' }}</p>
                     </div>
                 </div>
 
@@ -58,6 +55,12 @@
                 <button @click="toggleCamera" :class="{ active: isCameraOn }">
                     {{ isCameraOn ? '关闭摄像头' : '开启摄像头' }}
                 </button>
+                <button @click="toggleScreenShare" :class="{ active: isScreenSharing }">
+                    {{ isScreenSharing ? '停止共享' : '共享屏幕' }}
+                </button>
+                <button @click="toggleRecording" :class="{ active: isRecording }">
+                    {{ isRecording ? '停止录制' : '开始录制' }}
+                </button>
                 <button @click="leaveChannel" class="leave-btn">离开频道</button>
             </div>
 
@@ -65,14 +68,16 @@
             <div class="status-section">
                 <p>连接状态: {{ connectionState }}</p>
                 <p v-if="networkQuality">网络质量: {{ networkQuality }}</p>
+                <p v-if="recordingStatus">录制状态: {{ recordingStatus }}</p>
             </div>
         </el-card>
     </div>
 </template>
 
 <script>
-import { ref, onUnmounted, nextTick } from 'vue';
+import { ref, onUnmounted, nextTick, onMounted } from 'vue';
 import AgoraRTC from 'agora-rtc-sdk-ng';
+import { getAgoraToken } from '@/api/online';
 
 export default {
     name: 'AgoraRTCComponent',
@@ -82,8 +87,9 @@ export default {
 
         // 状态变量
         const channelName = ref('classroom1');
-        const tempToken = ref(''); // 从控制台获取的临时Token
+        const tempToken = ref('007eJxTYOiS+mZc9Geld9f77ya/c7vnHHfgaQrewakTnzNt0uWVu00UGMxSjY2NzSzM04wMzU0ski0Tk1ISLQ2NzJOM0pJNzJMszV/lZDQEMjI8v2jGyMgAgSA+F0NyTmJxcVF+fq4hAwMAdhcjDw=='); // 从控制台获取的临时Token
         const userRole = ref('host');
+        const userId = ref(123);
         const isJoined = ref(false);
         const isPublished = ref(false);
         const isMuted = ref(false);//未静音
@@ -92,6 +98,24 @@ export default {
         const remoteUsers = ref([]);
         const connectionState = ref('未连接');
         const networkQuality = ref('');
+        const isScreenSharing = ref(false);
+        const isRecording = ref(false);
+        const recordingStatus = ref('');
+        const mediaRecorder = ref(null);
+        const recordedChunks = ref([]);
+
+        // 获取Agora Token
+        const fetchAgoraToken = async () => {
+            try {
+                const response = await getAgoraToken(channelName.value, userId.value, userRole.value);
+                tempToken.value = response.token;
+                console.log('获取Agora Token成功:', appId);
+                console.log('获取Agora Token成功:', tempToken.value);
+            } catch (error) {
+                console.error('获取Agora Token失败:', error);
+                alert('获取Agora Token失败，请检查控制台');
+            }
+        };
 
         // DOM引用
         const localPlayer = ref(null);
@@ -102,6 +126,8 @@ export default {
             localAudioTrack: null,
             localVideoTrack: null
         };
+
+
 
         // 初始化声网客户端
         const initRTCClient = () => {
@@ -153,6 +179,15 @@ export default {
             }
 
             try {
+
+                // 先获取token
+                //await fetchAgoraToken();
+
+                // 确保token已获取
+                if (!tempToken.value) {
+                    throw new Error('未能获取有效的Token');
+                }
+                
                 // 初始化客户端
                 if (!rtcClient.client) initRTCClient();
 
@@ -232,6 +267,269 @@ export default {
             }
         };
 
+        // 切换屏幕共享状态
+        const toggleScreenShare = async () => {
+            try {
+                if (isScreenSharing.value) {
+                    // 停止屏幕共享
+                    await stopScreenShare();
+                    isScreenSharing.value = false;
+
+                    // 恢复之前的摄像头状态
+                    if (rtcClient._previousCameraState?.wasCameraOn) {
+                        await restoreCamera();
+                    }
+                } else {
+                    // 开始屏幕共享
+                    await startScreenShare();
+                    isScreenSharing.value = true;
+                }
+            } catch (error) {
+                console.error('屏幕共享操作失败:', error);
+                recordingStatus.value = `屏幕共享失败: ${error.message}`;
+                isScreenSharing.value = false;
+
+                // 失败时尝试恢复摄像头
+                if (rtcClient._previousCameraState?.wasCameraOn) {
+                    await restoreCamera();
+                }
+            }
+        };
+
+        // 停止屏幕共享的独立函数
+        const stopScreenShare = async () => {
+            if (!rtcClient.localVideoTrack) return;
+
+            try {
+                // 检查是否是屏幕共享轨道
+                const track = rtcClient.localVideoTrack.getMediaStreamTrack();
+                if (track) {
+                    // 移除结束监听器
+                    track.onended = null;
+
+                    // 停止轨道
+                    track.stop();
+                }
+
+                // 关闭并移除本地视频轨道
+                rtcClient.localVideoTrack.close();
+                rtcClient.localVideoTrack = null;
+
+                // 取消发布视频轨道
+                await rtcClient.client.unpublish(rtcClient.localVideoTrack);
+            } catch (error) {
+                console.error('停止屏幕共享时出错:', error);
+                throw error;
+            }
+        };
+
+        // 开始屏幕共享的独立函数
+        const startScreenShare = async () => {
+            try {
+                // 保存当前摄像头状态
+                rtcClient._previousCameraState = {
+                    wasCameraOn: isCameraOn.value,
+                    wasVideoPublished: isPublished.value
+                };
+
+                // 关闭当前视频轨道（如果有）
+                if (rtcClient.localVideoTrack) {
+                    await rtcClient.client.unpublish(rtcClient.localVideoTrack);
+                    rtcClient.localVideoTrack.close();
+                    rtcClient.localVideoTrack = null;
+                }
+
+                // 创建屏幕共享轨道
+                let screenTrack;
+                try {
+                    screenTrack = await AgoraRTC.createScreenVideoTrack({
+                        encoderConfig: '1080p_1',
+                        screenShareConfig: {
+                            contentHint: 'detail',
+                            captureMouseCursor: true
+                        }
+                    }, "auto");
+                } catch (error) {
+                    // 处理用户取消共享选择的情况
+                    if (error.message.includes('Permission denied') ||
+                        error.message.includes('User canceled')) {
+                        throw new Error('用户取消了屏幕共享');
+                    }
+                    throw error;
+                }
+
+                // 处理返回的轨道（可能是数组或单个轨道）
+                rtcClient.localVideoTrack = Array.isArray(screenTrack) ? screenTrack[0] : screenTrack;
+
+                if (!rtcClient.localVideoTrack) {
+                    throw new Error('无法获取屏幕共享轨道');
+                }
+
+                // 验证轨道是否有效
+                const mediaStreamTrack = rtcClient.localVideoTrack.getMediaStreamTrack();
+                if (!mediaStreamTrack) {
+                    throw new Error('获取的屏幕共享轨道无效');
+                }
+
+                // 监听屏幕共享停止事件
+                mediaStreamTrack.onended = () => {
+                    console.log('屏幕共享被用户手动停止');
+                    toggleScreenShare();
+                };
+
+                // 发布屏幕共享轨道
+                const tracksToPublish = [];
+                if (rtcClient.localAudioTrack) {
+                    tracksToPublish.push(rtcClient.localAudioTrack);
+                }
+                tracksToPublish.push(rtcClient.localVideoTrack);
+
+                await rtcClient.client.publish(tracksToPublish);
+
+                // 播放屏幕共享视频
+                if (localPlayer.value) {
+                    rtcClient.localVideoTrack.play(localPlayer.value);
+                }
+
+                // 更新状态
+                isCameraOn.value = false;
+                isPublished.value = true;
+
+                // 检查轨道是否真的可用
+                await new Promise((resolve, reject) => {
+                    const checkInterval = setInterval(() => {
+                        if (mediaStreamTrack.readyState === 'ended') {
+                            clearInterval(checkInterval);
+                            reject(new Error('屏幕共享轨道意外结束'));
+                        }
+
+                        // 检查视频轨道是否有帧数据
+                        const videoElement = document.createElement('video');
+                        videoElement.srcObject = new MediaStream([mediaStreamTrack]);
+                        videoElement.onloadedmetadata = () => {
+                            clearInterval(checkInterval);
+                            resolve();
+                        };
+                        videoElement.onerror = () => {
+                            clearInterval(checkInterval);
+                            reject(new Error('屏幕共享轨道无法播放'));
+                        };
+
+                        // 超时检查
+                        setTimeout(() => {
+                            clearInterval(checkInterval);
+                            reject(new Error('屏幕共享轨道验证超时'));
+                        }, 3000);
+                    }, 300);
+                });
+
+            } catch (error) {
+                console.error('开始屏幕共享时出错:', error);
+                throw error;
+            }
+        };
+
+        // 恢复摄像头的独立函数
+        const restoreCamera = async () => {
+            try {
+                if (rtcClient.localVideoTrack) {
+                    await rtcClient.client.unpublish(rtcClient.localVideoTrack);
+                    rtcClient.localVideoTrack.close();
+                    rtcClient.localVideoTrack = null;
+                }
+
+                rtcClient.localVideoTrack = await AgoraRTC.createCameraVideoTrack({
+                    encoderConfig: '720p'
+                });
+
+                const tracksToPublish = [];
+                if (rtcClient.localAudioTrack) {
+                    tracksToPublish.push(rtcClient.localAudioTrack);
+                }
+                tracksToPublish.push(rtcClient.localVideoTrack);
+
+                await rtcClient.client.publish(tracksToPublish);
+                rtcClient.localVideoTrack.play(localPlayer.value);
+
+                isCameraOn.value = true;
+                isPublished.value = true;
+            } catch (error) {
+                console.error('恢复摄像头时出错:', error);
+                isCameraOn.value = false;
+                isPublished.value = false;
+                throw error;
+            }
+        };
+
+        // 本地录制
+        const toggleRecording = async () => {
+            try {
+                if (isRecording.value) {
+                    // 停止录制
+                    mediaRecorder.value.stop();
+                    isRecording.value = false;
+                    recordingStatus.value = '录制已停止，正在生成文件...';
+                } else {
+                    // 开始录制
+                    recordedChunks.value = [];
+                    const stream = new MediaStream();
+
+                    // 添加音频轨道
+                    if (rtcClient.localAudioTrack) {
+                        stream.addTrack(rtcClient.localAudioTrack.getMediaStreamTrack());
+                    }
+
+                    // 添加视频轨道（屏幕共享或摄像头）
+                    if (rtcClient.localVideoTrack) {
+                        stream.addTrack(rtcClient.localVideoTrack.getMediaStreamTrack());
+                    }
+
+                    // 如果没有音视频轨道则不能录制
+                    if (stream.getTracks().length === 0) {
+                        recordingStatus.value = '无法录制：没有可用的音视频轨道';
+                        return;
+                    }
+
+                    mediaRecorder.value = new MediaRecorder(stream, {
+                        mimeType: 'video/webm;codecs=vp9'
+                    });
+
+                    mediaRecorder.value.ondataavailable = (event) => {
+                        if (event.data.size > 0) {
+                            recordedChunks.value.push(event.data);
+                        }
+                    };
+
+                    mediaRecorder.value.onstop = () => {
+                        const blob = new Blob(recordedChunks.value, {
+                            type: 'video/webm'
+                        });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = url;
+                        a.download = `录制-${new Date().toISOString().replace(/[:.]/g, '-')}.webm`;
+                        document.body.appendChild(a);
+                        a.click();
+                        setTimeout(() => {
+                            document.body.removeChild(a);
+                            window.URL.revokeObjectURL(url);
+                        }, 100);
+
+                        recordingStatus.value = '录制文件已下载';
+                    };
+
+                    mediaRecorder.value.start(1000); // 每1秒收集一次数据
+                    isRecording.value = true;
+                    recordingStatus.value = '正在录制...';
+                }
+            } catch (error) {
+                console.error('录制操作失败:', error);
+                recordingStatus.value = `录制失败: ${error.message}`;
+                isRecording.value = false;
+            }
+        };
+
         // 离开频道
         const leaveChannel = async () => {
             try {
@@ -243,6 +541,11 @@ export default {
                 if (rtcClient.localVideoTrack) {
                     rtcClient.localVideoTrack.stop();
                     rtcClient.localVideoTrack.close();
+                }
+
+                if (isRecording.value) {
+                    mediaRecorder.value.stop();
+                    isRecording.value = false;
                 }
 
                 // 离开频道
@@ -280,6 +583,9 @@ export default {
             remoteUsers,
             connectionState,
             networkQuality,
+            isScreenSharing,
+            isRecording,
+            recordingStatus,
 
             // DOM引用
             localPlayer,
@@ -288,7 +594,9 @@ export default {
             joinChannel,
             leaveChannel,
             toggleMic,
-            toggleCamera
+            toggleCamera,
+            toggleScreenShare,
+            toggleRecording
         };
     }
 };
@@ -394,6 +702,25 @@ button.active {
 .video-info {
     font-size: 14px;
     color: #666;
+}
+
+button.active.recording {
+    background: #ff5722;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
+
+    100% {
+        opacity: 1;
+    }
 }
 
 @media (max-width: 768px) {
