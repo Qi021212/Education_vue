@@ -40,7 +40,7 @@
                     <h3>学生 ({{ remoteUsers.length }})</h3>
                     <div class="remote-users">
                         <div v-for="user in remoteUsers" :key="user.uid" class="remote-user">
-                            <div :ref="`remotePlayer_${user.uid}`" class="video-player"></div>
+                            <div :ref="el => { remotePlayerRefs.value[user.uid] = el }" class="video-player"></div>
                             <div class="user-info">用户ID: {{ user.uid }}</div>
                         </div>
                     </div>
@@ -155,9 +155,9 @@ export default {
                 await nextTick();
 
                 if (mediaType === 'video') {
-                    const playerRef = `remotePlayer_${user.uid}`;
-                    if (playerRef in refs) {
-                        user.videoTrack.play(refs[playerRef][0]);
+                    const playerElement = remotePlayerRefs.value[user.uid];
+                    if (playerElement) {
+                        user.videoTrack.play(playerElement);
                     }
                 }
 
@@ -187,7 +187,7 @@ export default {
                 if (!tempToken.value) {
                     throw new Error('未能获取有效的Token');
                 }
-                
+
                 // 初始化客户端
                 if (!rtcClient.client) initRTCClient();
 

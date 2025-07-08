@@ -36,6 +36,19 @@
             show-password></el-input>
         </el-form-item>
 
+        <el-form-item prop="email" style="display: flex; flex-direction: column;">
+          <div style="display: flex; margin-bottom: 5px;">
+            <el-input v-model="registerForm.email" placeholder="请输入邮箱"></el-input>
+            <el-button @click="sendCode" :disabled="isSending" style="margin-left: 8px;">
+              {{ isSending ? `${countdown}秒后重试` : '获取验证码' }}
+            </el-button>
+          </div>
+        </el-form-item>
+
+        <el-form-item prop="code">
+          <el-input v-model="registerForm.code" placeholder="请输入验证码"></el-input>
+        </el-form-item>
+
         <el-form-item prop="role">
           <el-radio-group v-model="registerForm.role">
             <el-radio label="admin">管理员</el-radio>
@@ -109,6 +122,8 @@ const registerForm = ref({
   password: '',
   confirmPassword: '',
   role: 'teacher',
+  email: '',
+  code: '',
   t_name: '',
   gender: 'male',
   avatar: 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png',
@@ -143,9 +158,59 @@ const accountRules = {
     { required: true, message: '请再次输入密码', trigger: 'blur' },
     { validator: validatePassword, trigger: 'blur' }
   ],
+  email: [
+    { required: true, message: '请输入邮箱', trigger: 'blur' },
+    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
+  ],
+  code: [
+    { required: true, message: '请输入验证码', trigger: 'blur' },
+    { pattern: /^\d{6}$/, message: '验证码应为6位数字', trigger: 'blur' }
+  ],
   role: [
     { required: true, message: '请选择角色', trigger: 'change' }
   ]
+}
+
+import { sendEmailCode } from '@/api/user' // 假设有发送验证码的API
+
+const isSending = ref(false)
+const countdown = ref(60)
+
+const sendCode = async () => {
+  try {
+    // 验证邮箱格式
+    if (!registerForm.value.email) {
+      ElMessage.error('请输入邮箱')
+      return
+    }
+
+    if (!/^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/.test(registerForm.value.email)) {
+      ElMessage.error('邮箱格式不正确')
+      return
+    }
+
+    // 调用发送验证码接口
+    const res = await sendEmailCode(registerForm.value.email)
+    if (res) {
+      ElMessage.success('验证码发送成功')
+      startCountdown()
+    }
+  } catch (error) {
+    console.error('发送验证码失败:', error)
+    ElMessage.error('验证码发送失败')
+  }
+}
+
+const startCountdown = () => {
+  isSending.value = true
+  countdown.value = 60
+  const timer = setInterval(() => {
+    countdown.value--
+    if (countdown.value <= 0) {
+      clearInterval(timer)
+      isSending.value = false
+    }
+  }, 1000)
 }
 
 // 第二步验证规则
@@ -248,23 +313,24 @@ const handleRegister = async () => {
     await infoFormRef.value.validate()
 
     console.log('注册表单数据:', registerForm.value)
-    const { confirmPassword, ...submitData } = registerForm.value
-    console.log('提交的表单数据:', submitData)
+    const { confirmPassword, code, ...submitData } = registerForm.value
+
     let response
     if (registerForm.value.role === 'admin') {
-      response = await adminRegister(submitData)
+      response = await adminRegister(submitData, { code }) // code作为params
     } else {
-      response = await teacherRegister(submitData)
+      response = await teacherRegister(submitData, { code }) // code作为params
     }
+
     if (response) {
       ElMessage.success('注册成功')
       router.push('/login')
     } else {
-      ElMessage.error(response.message)
+      ElMessage.error(response.message || '注册失败')
     }
-
   } catch (error) {
     console.error('注册失败:', error)
+    ElMessage.error(error.message || '注册失败')
   }
 }
 
@@ -346,13 +412,13 @@ h2 {
 }
 
 .el-form-item {
-  margin-bottom: 10px;
+  margin-bottom: 15px;
 }
 
 .el-button {
   width: 50%;
   margin-left: 25%;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
 }
 
 .text-center {
