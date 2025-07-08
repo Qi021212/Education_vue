@@ -346,7 +346,7 @@ onMounted(() => {
 <style scoped>
 .register-page {
   width: 800px;
-  height: 500px;
+  height: 550px;
   margin: 100px auto;
   display: flex;
   align-items: center;

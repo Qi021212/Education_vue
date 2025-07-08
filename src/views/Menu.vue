@@ -6,7 +6,7 @@
                 <el-icon class="collapse-icon" @click="toggleCollapse">
                     <component :is="isCollapse ? Expand : Fold" />
                 </el-icon>
-                <h3>教师中心系统</h3>
+                <h3>iTeach教师中心系统</h3>
             </div>
 
             <div class="header-right">

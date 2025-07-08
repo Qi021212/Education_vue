@@ -3,7 +3,7 @@
         <!-- 背景区域 -->
         <el-col :span="12" class="bg">
             <div class="bg-overlay">
-                <h1>教师中心系统</h1>
+                <h1>iTeach教师中心系统</h1>
                 <p>高效管理教学资源，提升教学质量</p>
             </div>
         </el-col>
@@ -106,7 +106,7 @@ const redirectToRegister = () => {
 <style scoped>
 .login-page {
     width: 800px;
-    height: 500px;
+    height: 550px;
     margin: 100px auto;
     display: flex;
     align-items: center;
