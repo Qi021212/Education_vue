@@ -26,6 +26,10 @@
                         <div class="el-upload__tip">请上传MP4格式的教学视频</div>
                     </template>
                 </el-upload>
+                <div v-if="formData.video" class="video-preview">
+                    <video v-if="formData.video" :src="formData.video" controls
+                        style="max-width: 100%; max-height: 200px; margin-top: 10px;"></video>
+                </div>
             </el-form-item>
             <el-form-item label="内容" prop="intro">
                 <el-input v-model="formData.intro" type="textarea" :rows="5" placeholder="请输入内容描述" />
@@ -77,30 +81,30 @@ const rules = reactive({
 import { uploadFile } from '@/api/file'
 // 处理图片上传
 const handlePictureUpload = (file) => {
-  uploadFile(file.raw)
-    .then((response) => {
-      const newFormData = { ...props.formData, cover: response.url };
-      emit('update:formData', newFormData);
-    })
-    .catch((error) => {
-      console.error('图片上传错误:', error);
-      ElMessage.error('图片上传失败');
-    });
+    uploadFile(file.raw)
+        .then((response) => {
+            const newFormData = { ...props.formData, cover: response.url };
+            emit('update:formData', newFormData);
+        })
+        .catch((error) => {
+            console.error('图片上传错误:', error);
+            ElMessage.error('图片上传失败');
+        });
 }
 
 // 处理视频上传
 const handleVideoUpload = (file) => {
     uploadFile(file.raw)
         .then((response) => {
-        console.log('视频上传成功:', response);
-        const newFormData = { ...props.formData, video: response.url };
-        emit('update:formData', newFormData);
+            console.log('视频上传成功:', response);
+            const newFormData = { ...props.formData, video: response.url };
+            emit('update:formData', newFormData);
         })
         .catch((error) => {
-        console.error('视频上传错误:', error);
-        ElMessage.error('视频上传失败');
+            console.error('视频上传错误:', error);
+            ElMessage.error('视频上传失败');
         });
-    }
+}
 
 const submitForm = () => {
     formRef.value.validate((valid) => {
@@ -138,5 +142,13 @@ const submitForm = () => {
     width: 148px;
     height: 148px;
     display: block;
+}
+
+.video-preview {
+    margin-top: 10px;
+    border: 1px solid #eee;
+    padding: 10px;
+    border-radius: 4px;
+    background: #f9f9f9;
 }
 </style>

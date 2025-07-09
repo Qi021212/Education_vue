@@ -13,6 +13,7 @@ import HomeworkCollection from '@/views/homework/HomeworkCollection.vue'
 import TeacherProfile from '@/views/user/TeacherProfile.vue'
 import TeacherAccount from '@/views/account/TeacherAccount.vue'
 import live from '@/views/online/live.vue'
+import liveRecord from '@/views/online/liveRecord.vue'
 
 //定义路由
 const routes = [
@@ -28,7 +29,8 @@ const routes = [
             { path: 'homeworkCollection', component: HomeworkCollection },
             { path: 'teacherProfile', component: TeacherProfile },
             { path: 'teacherAccount', component: TeacherAccount },
-            { path: 'live', component: live }
+            { path: 'live', component: live },
+            { path: 'liveRecord', component: liveRecord }
 
         ]
     }
