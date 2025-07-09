@@ -1,6 +1,6 @@
 <template>
     <el-row class="login-page">
-        <!-- 背景区域（与Login.vue保持一致） -->
+        <!-- 背景区域 -->
         <el-col :span="12" class="bg">
             <div class="bg-overlay">
                 <h1>iTeach教师中心系统</h1>
@@ -238,7 +238,6 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-/* 保持与Login.vue一致的样式 */
 .login-page {
     width: 800px;
     height: 550px;
