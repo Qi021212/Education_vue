@@ -88,6 +88,7 @@ export const sendEmailCode = (email) => {
 // 修改教师密码
 export const changeTeacherPassword = async (data) => {
     try {
+        console.log(data);
         const response = await request.post('/teacher/resetPass',
             null, // 请求体为空
             {

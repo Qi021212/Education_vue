@@ -7,14 +7,19 @@
         </div>
       </template>
 
-      <!-- 搜索栏 -->
-      <div class="search-bar">
-        <el-form :inline="true" :model="searchForm">
+      <!-- 搜索和操作区域 -->
+      <div class="filter-container">
+        <el-form :inline="true" :model="listQuery" class="search-form">
           <el-form-item label="教师姓名">
-            <el-input v-model="searchForm.t_name" placeholder="请输入教师姓名" clearable />
+            <el-input v-model="listQuery.t_name" placeholder="请输入教师姓名" clearable @keyup.enter="handleSearch" />
           </el-form-item>
-          <el-form-item label="用户名">
-            <el-input v-model="searchForm.t_username" placeholder="请输入用户名" clearable />
+          <el-form-item label="工号">
+            <el-input v-model="listQuery.t_username" placeholder="请输入工号" clearable @keyup.enter="handleSearch" />
+          </el-form-item>
+          <el-form-item label="角色">
+            <el-select v-model="listQuery.role" placeholder="请选择角色" clearable>
+              <el-option v-for="item in roleOptions" :key="item.value" :label="item.label" :value="item.value" />
+            </el-select>
           </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="handleSearch">搜索</el-button>
@@ -23,69 +28,104 @@
         </el-form>
       </div>
 
-      <!-- 教师列表表格 -->
-      <el-table :data="teacherList" border style="width: 100%" v-loading="loading">
-        <el-table-column prop="t_username" label="用户名" width="150" />
-        <el-table-column prop="t_name" label="教师姓名" width="120" />
-        <el-table-column label="性别" width="80">
-          <template #default="{row}">
-            {{ row.gender === 'male' ? '男' : '女' }}
+      <!-- 表格区域 -->
+      <el-table v-loading="loading" :data="teacherList" border fit highlight-current-row style="width: 100%"
+        @sort-change="handleSortChange">
+        <el-table-column label="序号" width="80" align="center" sortable="custom">
+          <template #default="{ $index }">
+            {{ (listQuery.page - 1) * listQuery.size + $index + 1 }}
           </template>
         </el-table-column>
-        <el-table-column label="头像" width="100">
-          <template #default="{row}">
-            <el-avatar :size="50" :src="row.avatar" />
+        <el-table-column label="工号" prop="t_username" width="150" align="center" sortable="custom" />
+        <el-table-column label="教师姓名" prop="t_name" width="150" align="center" sortable="custom" />
+        <el-table-column label="性别" width="80" align="center">
+          <template #default="{ row }">
+            {{ row.gender }}
           </template>
         </el-table-column>
-        <el-table-column prop="course" label="教授课程" />
-        <el-table-column label="角色" width="120">
-          <template #default="{row}">
-            <el-tag :type="row.role === 'admin' ? 'danger' : 'primary'">
+        <el-table-column label="头像" width="100" align="center">
+          <template #default="{ row }">
+            <el-avatar :size="50" :src="row.avatar || defaultAvatar" />
+          </template>
+        </el-table-column>
+        <el-table-column label="角色" width="120" align="center" sortable="custom" prop="role">
+          <template #default="{ row }">
+            <el-tag :type="roleTagType[row.role]">
               {{ roleMap[row.role] || row.role }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right">
-          <template #default="{row}">
-            <el-button size="small" @click="handleResetPwd(row)">重置密码</el-button>
-            <el-popconfirm title="确定要删除该教师吗？" @confirm="handleDelete(row)">
-              <template #reference>
-                <el-button size="small" type="danger">删除</el-button>
-              </template>
-            </el-popconfirm>
+        <el-table-column label="操作" width="220" align="center" fixed="right">
+          <template #default="{ row }">
+            <el-button type="primary" size="small" @click="showResetPasswordDialog(row)">重置密码</el-button>
+            <el-button type="info" size="small" @click="showTeacherDetails(row)">查看详情</el-button>
           </template>
         </el-table-column>
       </el-table>
 
       <!-- 分页 -->
-      <div class="pagination">
-        <el-pagination
-          v-model:current-page="pagination.current"
-          v-model:page-size="pagination.size"
-          :total="pagination.total"
-          :page-sizes="[10, 20, 50, 100]"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
+      <div class="pagination-container">
+        <el-pagination v-model:current-page="listQuery.page" v-model:page-size="listQuery.size" :total="total"
+          :page-sizes="[10, 20, 30, 50]" layout="total, sizes, prev, pager, next, jumper" background
+          @size-change="handleSizeChange" @current-change="handleCurrentChange" />
       </div>
     </el-card>
 
-
     <!-- 重置密码对话框 -->
-    <el-dialog v-model="pwdDialogVisible" title="重置密码" width="500px">
-      <el-form ref="pwdFormRef" :model="pwdForm" :rules="pwdRules" label-width="100px">
+    <el-dialog v-model="resetPasswordDialogVisible" title="重置密码" width="500px">
+      <el-form ref="resetPasswordFormRef" :model="resetPasswordForm" :rules="resetPasswordRules" label-width="100px">
+        <el-form-item label="工号">
+          <el-input v-model="currentTeacher.t_username" disabled />
+        </el-form-item>
         <el-form-item label="新密码" prop="newPassword">
-          <el-input v-model="pwdForm.newPassword" type="password" show-password />
+          <el-input v-model="resetPasswordForm.newPassword" type="password" show-password />
         </el-form-item>
         <el-form-item label="确认密码" prop="confirmPassword">
-          <el-input v-model="pwdForm.confirmPassword" type="password" show-password />
+          <el-input v-model="resetPasswordForm.confirmPassword" type="password" show-password />
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="pwdDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="submitPwdForm">确定</el-button>
+          <el-button @click="resetPasswordDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitResetPassword">确定</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <!-- 教师详情对话框 -->
+    <el-dialog v-model="teacherDetailsDialogVisible" title="教师详情" width="700px">
+      <el-descriptions :column="2" border>
+        <el-descriptions-item label="工号">{{ currentTeacher.t_username }}</el-descriptions-item>
+        <el-descriptions-item label="姓名">{{ currentTeacher.t_name }}</el-descriptions-item>
+        <el-descriptions-item label="性别">{{ currentTeacher.gender }}</el-descriptions-item>
+        <el-descriptions-item label="角色">
+          <el-tag :type="roleTagType[currentTeacher.role]">
+            {{ roleMap[currentTeacher.role] || currentTeacher.role }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="头像">
+          <el-avatar :size="100" :src="currentTeacher.avatar || defaultAvatar" />
+        </el-descriptions-item>
+        <el-descriptions-item label="联系电话">{{ currentTeacher.tel || '未填写' }}</el-descriptions-item>
+        <el-descriptions-item label="邮箱">{{ currentTeacher.email || '未填写' }}</el-descriptions-item>
+        <el-descriptions-item label="认证状态">
+          <el-tag :type="currentTeacher.certificated ? 'success' : 'warning'">
+            {{ currentTeacher.certificated ? '已认证' : '未认证' }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="注册时间">{{ currentTeacher.addtime }}</el-descriptions-item>
+        <el-descriptions-item label="教授课程" :span="2">
+          <div v-if="currentTeacher.course && currentTeacher.course.length > 0">
+            <el-tag v-for="(course, index) in currentTeacher.course" :key="index" style="margin-right: 5px;">
+              {{ course }}
+            </el-tag>
+          </div>
+          <span v-else>暂无课程</span>
+        </el-descriptions-item>
+      </el-descriptions>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button type="primary" @click="teacherDetailsDialogVisible = false">关闭</el-button>
         </span>
       </template>
     </el-dialog>
@@ -93,67 +133,158 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted,computed } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-// 角色映射
+import { ref, reactive, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { getTeacherAccountInfo } from '@/api/account'
+import { changeTeacherPassword } from '@/api/user'
+
+
+
 const roleMap = {
   admin: '管理员',
   teacher: '教师',
   assistant: '助教'
 }
 
-// 角色选项
+const roleTagType = {
+  admin: 'danger',
+  teacher: 'primary',
+  assistant: 'success'
+}
+
 const roleOptions = [
   { value: 'teacher', label: '教师' },
   { value: 'assistant', label: '助教' },
   { value: 'admin', label: '管理员' }
 ]
 
-// 搜索表单
-const searchForm = reactive({
-  t_username: '',
-  tname: ''
-})
+const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
 
-// 分页数据
-const pagination = reactive({
-  current: 1,
-  size: 10,
-  total: 0
-})
-
-// 教师列表
+// 数据状态
 const teacherList = ref([])
 const loading = ref(false)
+const total = ref(0)
+const currentTeacher = ref({})
 
-// 表单数据
-const formData = reactive({
+// 查询参数
+const listQuery = reactive({
+  page: 1,
+  size: 10,
   t_username: '',
-  tname: '',
-  gender: 'male',
-  avatar: '',
-  course: '',
-  role: 'teacher',
-  password: '123456' // 默认初始密码
+  t_name: '',
+  role: '',
+  sort: '',
+  order: ''
 })
 
-// 密码表单
-const pwdForm = reactive({
+// 获取教师数据
+const fetchData = async () => {
+  try {
+    loading.value = true
+    const response = await getTeacherAccountInfo()
+
+    if (response && Array.isArray(response)) {
+      let filteredData = [...response]
+
+      // 应用搜索条件
+      if (listQuery.t_name) {
+        filteredData = filteredData.filter(item =>
+          item.t_name?.includes(listQuery.t_name)
+        )
+      }
+
+      if (listQuery.t_username) {
+        filteredData = filteredData.filter(item =>
+          item.t_username?.includes(listQuery.t_username)
+        )
+      }
+
+      if (listQuery.role) {
+        filteredData = filteredData.filter(item =>
+          item.role === listQuery.role
+        )
+      }
+
+      // 应用排序
+      if (listQuery.sort) {
+        filteredData.sort((a, b) => {
+          const aValue = a[listQuery.sort] || ''
+          const bValue = b[listQuery.sort] || ''
+          if (listQuery.order === 'ascending') {
+            return aValue > bValue ? 1 : -1
+          } else {
+            return aValue < bValue ? 1 : -1
+          }
+        })
+      }
+
+      // 分页
+      total.value = filteredData.length
+      const start = (listQuery.page - 1) * listQuery.size
+      const end = start + listQuery.size
+      teacherList.value = filteredData.slice(start, end)
+    } else {
+      ElMessage.error('获取教师列表失败: 无效的响应格式')
+    }
+  } catch (error) {
+    console.error('获取教师列表错误:', error)
+    ElMessage.error('获取教师列表失败: ' + (error.message || '网络错误'))
+  } finally {
+    loading.value = false
+  }
+}
+
+// 显示教师详情对话框
+const teacherDetailsDialogVisible = ref(false)
+const showTeacherDetails = (row) => {
+  currentTeacher.value = { ...row }
+  teacherDetailsDialogVisible.value = true
+}
+
+// 搜索
+const handleSearch = () => {
+  listQuery.page = 1
+  fetchData()
+}
+
+// 重置搜索
+const resetSearch = () => {
+  listQuery.t_username = ''
+  listQuery.t_name = ''
+  listQuery.role = ''
+  listQuery.sort = ''
+  listQuery.order = ''
+  handleSearch()
+}
+
+// 排序变化
+const handleSortChange = ({ prop, order }) => {
+  listQuery.sort = prop
+  listQuery.order = order
+  fetchData()
+}
+
+// 分页变化
+const handleSizeChange = (size) => {
+  listQuery.size = size
+  fetchData()
+}
+
+const handleCurrentChange = (current) => {
+  listQuery.page = current
+  fetchData()
+}
+
+// 密码重置相关
+const resetPasswordDialogVisible = ref(false)
+const resetPasswordFormRef = ref()
+const resetPasswordForm = reactive({
+  username: '',
   newPassword: '',
   confirmPassword: ''
 })
 
-// 表单验证规则
-const rules = {
-  t_username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
-  tname: [{ required: true, message: '请输入教师姓名', trigger: 'blur' }],
-  gender: [{ required: true, message: '请选择性别', trigger: 'change' }],
-  role: [{ required: true, message: '请选择角色', trigger: 'change' }],
-  password: [{ required: true, message: '请输入初始密码', trigger: 'blur' }]
-}
-
-// 密码验证规则
-const pwdRules = {
+const resetPasswordRules = {
   newPassword: [
     { required: true, message: '请输入新密码', trigger: 'blur' },
     { min: 6, max: 20, message: '密码长度在6到20个字符', trigger: 'blur' }
@@ -162,7 +293,7 @@ const pwdRules = {
     { required: true, message: '请确认密码', trigger: 'blur' },
     {
       validator: (rule, value, callback) => {
-        if (value !== pwdForm.newPassword) {
+        if (value !== resetPasswordForm.newPassword) {
           callback(new Error('两次输入密码不一致'))
         } else {
           callback()
@@ -173,129 +304,42 @@ const pwdRules = {
   ]
 }
 
-// 对话框控制
-const dialogVisible = ref(false)
-const pwdDialogVisible = ref(false)
-const isEdit = ref(false)
-const formRef = ref(null)
-const pwdFormRef = ref(null)
+// 显示重置密码对话框
+const showResetPasswordDialog = (row) => {
+  currentTeacher.value = { ...row }
+  resetPasswordForm.username = row.t_username
+  resetPasswordForm.newPassword = ''
+  resetPasswordForm.confirmPassword = ''
+  resetPasswordDialogVisible.value = true
+}
 
+// 提交密码重置
+const submitResetPassword = async () => {
+  resetPasswordFormRef.value.validate(async (valid) => {
+    if (!valid) return
+    try {
+      let response
+      response = await changeTeacherPassword(resetPasswordForm)
+      if (response && response.code === 200) {
+        ElMessage.success('密码修改成功')
+        resetPasswordDialogVisible.value = false
+        // 清空密码表单
+        resetPasswordForm.newPassword = ''
+        resetPasswordForm.confirmPassword = ''
 
-// 获取教师列表
-const fetchTeachers = async () => {
-  try {
-    loading.value = true
-    // 这里替换为实际的API调用
-    const params = {
-      page: pagination.current,
-      size: pagination.size,
-      ...searchForm
-    }
-    // const res = await getTeachers(params)
-    // teacherList.value = res.data.list
-    // pagination.total = res.data.total
-    
-    // 模拟数据
-    teacherList.value = [
-      {
-        id: 1,
-        t_username: 'teacher1',
-        t_name: '张老师',
-        gender: 'male',
-        avatar: '',
-        course: '数学',
-        role: 'teacher'
-      },
-      {
-        id: 2,
-        t_username: 'teacher2',
-        t_name: '李老师',
-        gender: 'female',
-        avatar: '',
-        course: '英语',
-        role: 'teacher'
-      },
-      {
-        id: 3,
-        t_username: 'assistant1',
-        t_name: '王助教',
-        gender: 'male',
-        avatar: '',
-        course: '数学',
-        role: 'assistant'
+      } else {
+        throw new Error(response?.message || '密码修改失败')
       }
-    ]
-    pagination.total = 3
-  } catch (error) {
-    ElMessage.error('获取教师列表失败')
-    console.error(error)
-  } finally {
-    loading.value = false
-  }
+    } catch (error) {
+      console.error('修改密码错误:', error)
+      ElMessage.error('密码修改失败: ' + (error.message || '网络错误'))
+    }
+  })
 }
 
-// 搜索
-const handleSearch = () => {
-  pagination.current = 1
-  fetchTeachers()
-}
-
-// 重置搜索
-const resetSearch = () => {
-  searchForm.t_username = ''
-  searchForm.tname = ''
-  handleSearch()
-}
-
-// 分页变化
-const handleSizeChange = (size) => {
-  pagination.size = size
-  fetchTeachers()
-}
-
-const handleCurrentChange = (current) => {
-  pagination.current = current
-  fetchTeachers()
-}
-
-
-// 重置密码
-const handleResetPwd = (row) => {
-  currentTeacherId = row.id
-  pwdForm.newPassword = ''
-  pwdForm.confirmPassword = ''
-  pwdDialogVisible.value = true
-}
-
-// 删除教师
-const handleDelete = async (row) => {
-  try {
-    // await deleteTeacher(row.id)
-    ElMessage.success('删除成功')
-    fetchTeachers()
-  } catch (error) {
-    ElMessage.error('删除失败')
-    console.error(error)
-  }
-}
-
-// 提交密码表单
-const submitPwdForm = async () => {
-  try {
-    await pwdFormRef.value.validate()
-    
-    // 这里替换为实际的API调用
-    // await resetPassword(currentTeacherId, pwdForm.newPassword)
-    ElMessage.success('密码重置成功')
-    pwdDialogVisible.value = false
-  } catch (error) {
-    console.error(error)
-  }
-}
-
-
+// 初始化
 onMounted(() => {
-  fetchTeachers()
+  fetchData()
 })
 </script>
 
@@ -304,48 +348,25 @@ h3 {
   margin: 0;
 }
 
-.card-header {
+.filter-container {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-}
-
-.search-bar {
   margin-bottom: 20px;
 }
 
-.pagination {
+.search-form {
+  display: flex;
+  align-items: center;
+}
+
+.pagination-container {
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
 }
 
-.avatar-uploader {
-  border: 1px dashed #d9d9d9;
-  border-radius: 6px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  width: 100px;
-  height: 100px;
-}
-
-.avatar-uploader:hover {
-  border-color: #409EFF;
-}
-
-.avatar-uploader-icon {
-  font-size: 28px;
-  color: #8c939d;
-  width: 100px;
-  height: 100px;
-  line-height: 100px;
-  text-align: center;
-}
-
-.avatar {
-  width: 100px;
-  height: 100px;
-  display: block;
+.el-select,
+.el-input {
+  width: 150px;
 }
 </style>

@@ -62,17 +62,20 @@ export const deleteTeachingMaterial = async (ids) => {
 
 // 获取教学视频列表
 export const getTeachingVideoList = async (username) => {
-    console.log("Fetching teaching video list with data:", { tUsername: username });
     try {
-        const response = await request.post('courseVideo/lists', {  // 改为POST
-            tUsername: username  // 作为请求体发送
-        });
+        const response = await request.post('courseVideo/lists', null,
+            {
+                params: {
+                    tUsername: username
+                }
+            });
         return response.data;
     } catch (error) {
         console.error("Error fetching teaching video list:", error);
         throw error;
     }
 }
+
 // 新增教学视频
 export const addTeachingVideo = async (data) => {
     try {
