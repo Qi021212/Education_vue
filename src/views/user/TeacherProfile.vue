@@ -47,6 +47,11 @@
               <span v-else>{{ teacherInfo.tel }}</span>
             </el-descriptions-item>
 
+            <el-descriptions-item label="个人签名">
+              <el-input v-if="editing" v-model="teacherInfo.signature" />
+              <span v-else>{{ teacherInfo.signature || '暂无签名' }}</span>
+            </el-descriptions-item>
+
             <el-descriptions-item label="所授课程">
               <el-select v-if="editing" v-model="teacherInfo.course" multiple filterable allow-create
                 placeholder="请选择课程" style="width: 100%">
@@ -131,8 +136,9 @@ const teacherInfo = reactive({
   t_name: authStore.userInfo.t_name,
   gender: authStore.userInfo.gender,
   tel: authStore.userInfo.tel,
+  signature: authStore.userInfo.signature || '',
   course: authStore.userInfo.course,
-  certificated: authStore.userInfo.certificated || false
+  certificated: authStore.userInfo.certificated
 })
 
 // 所有可选课程和班级
