@@ -93,7 +93,7 @@ export default {
         const isJoined = ref(false);
         const isPublished = ref(false);
         const isMuted = ref(false);//未静音
-        const isCameraOn = ref(true);//摄像头开启
+        const isCameraOn = ref(false);//摄像头关闭
         const localUid = ref(null);
         const remoteUsers = ref([]);
         const connectionState = ref('未连接');
@@ -182,7 +182,6 @@ export default {
 
                 // 先获取token
                 //await fetchAgoraToken();
-
                 // 确保token已获取
                 if (!tempToken.value) {
                     throw new Error('未能获取有效的Token');
@@ -206,7 +205,7 @@ export default {
 
                 // 如果是主播，发布本地流
                 if (userRole.value === 'host') {
-                    await publishLocalTracks();
+                    await publishLocalTracks(false);
                 }
 
                 isJoined.value = true;
@@ -217,29 +216,51 @@ export default {
         };
 
         // 发布本地音视频轨道
-        const publishLocalTracks = async () => {
+        const publishLocalTracks = async (publishVideo = false) => {
             try {
+                // 总是发布音频
                 rtcClient.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-                rtcClient.localVideoTrack = await AgoraRTC.createCameraVideoTrack({
-                    encoderConfig: '720p'
-                });
 
-                await rtcClient.client.publish([
-                    rtcClient.localAudioTrack,
-                    rtcClient.localVideoTrack
-                ]);
+                const tracksToPublish = [rtcClient.localAudioTrack];
 
-                await nextTick();
-                // 确保localPlayer ref已绑定
-                if (localPlayer.value) {
-                    rtcClient.localVideoTrack.play(localPlayer.value);
-                } else {
-                    console.error('localPlayer ref not found');
+                // 根据参数决定是否发布视频
+                if (publishVideo) {
+                    rtcClient.localVideoTrack = await AgoraRTC.createCameraVideoTrack({
+                        encoderConfig: '720p'
+                    });
+                    tracksToPublish.push(rtcClient.localVideoTrack);
+
+                    await nextTick();
+                    if (localPlayer.value) {
+                        rtcClient.localVideoTrack.play(localPlayer.value);
+                    }
                 }
 
+                await rtcClient.client.publish(tracksToPublish);
                 isPublished.value = true;
             } catch (error) {
                 console.error('发布本地轨道失败:', error);
+            }
+        };
+
+        // 修改toggleCamera方法，确保在开启摄像头时发布视频轨道
+        const toggleCamera = async () => {
+            try {
+                if (isCameraOn.value) {
+                    // 关闭摄像头
+                    if (rtcClient.localVideoTrack) {
+                        await rtcClient.client.unpublish(rtcClient.localVideoTrack);
+                        rtcClient.localVideoTrack.stop();
+                        rtcClient.localVideoTrack.close();
+                        rtcClient.localVideoTrack = null;
+                    }
+                } else {
+                    // 开启摄像头
+                    await publishLocalTracks(true); // 发布视频轨道
+                }
+                isCameraOn.value = !isCameraOn.value;
+            } catch (error) {
+                console.error('切换摄像头失败:', error);
             }
         };
 
@@ -252,18 +273,6 @@ export default {
                 isMuted.value = !isMuted.value;
             } catch (error) {
                 console.error('切换麦克风失败:', error);
-            }
-        };
-
-        // 切换摄像头状态
-        const toggleCamera = async () => {
-            if (!rtcClient.localVideoTrack) return;
-
-            try {
-                await rtcClient.localVideoTrack.setMuted(isCameraOn.value);
-                isCameraOn.value = !isCameraOn.value;
-            } catch (error) {
-                console.error('切换摄像头失败:', error);
             }
         };
 

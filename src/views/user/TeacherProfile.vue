@@ -17,6 +17,13 @@
             </el-icon>
           </el-upload>
           <div class="teacher-id">工号: {{ teacherInfo.t_username }}</div>
+          <el-tag :type="teacherInfo.certificated ? 'success' : 'warning'" class="certification-tag">
+            {{ teacherInfo.certificated ? '已认证' : '未认证' }}
+          </el-tag>
+          <el-button v-if="!teacherInfo.certificated" @click="openFaceRegistration" type="primary" size="small"
+            class="register-face-btn">
+            录入人脸
+          </el-button>
         </div>
 
         <!-- 右侧信息 -->
@@ -100,6 +107,9 @@
         <el-button type="primary" @click="submitPasswordChange">确认修改</el-button>
       </template>
     </el-dialog>
+
+    <!-- 人脸录入组件 -->
+    <face-registration ref="faceRegistration" @registration-success="handleRegistrationSuccess" />
   </div>
 </template>
 
@@ -109,6 +119,7 @@ import { ElMessage } from 'element-plus'
 import {
   User, Edit, Lock, Close, Check
 } from '@element-plus/icons-vue'
+import FaceRegistration from '@/components/FaceRegistration.vue'
 
 import { useAuthStore } from '@/stores/authStore'
 const authStore = useAuthStore()
@@ -120,7 +131,8 @@ const teacherInfo = reactive({
   t_name: authStore.userInfo.t_name,
   gender: authStore.userInfo.gender,
   tel: authStore.userInfo.tel,
-  course: authStore.userInfo.course
+  course: authStore.userInfo.course,
+  certificated: authStore.userInfo.certificated || false
 })
 
 // 所有可选课程和班级
@@ -297,6 +309,20 @@ const submitPasswordChange = () => {
     }
   })
 }
+
+// 人脸录入
+const faceRegistration = ref(null)
+// 打开人脸录入对话框
+const openFaceRegistration = () => {
+  faceRegistration.value.openDialog()
+}
+
+// 处理人脸录入成功
+const handleRegistrationSuccess = () => {
+  teacherInfo.certificated = true
+  authStore.updateUserInfo({ certificated: true })
+}
+
 onMounted(() => {
   fetchCourseList()
 })
@@ -405,17 +431,20 @@ onMounted(() => {
   gap: 5px;
 }
 
-.course-tag,
-.class-tag {
-  margin-right: 5px;
-  margin-bottom: 5px;
-}
-
 .profile-actions {
   margin-top: 30px;
   display: flex;
   justify-content: center;
   gap: 15px;
+}
+
+.certification-tag {
+  margin-top: 10px;
+}
+
+.register-face-btn {
+  margin-top: 10px;
+  width: 100%;
 }
 
 /* 响应式设计 */

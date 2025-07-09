@@ -1,5 +1,6 @@
 import request from '@/utils/request.js'
 import axios from 'axios';
+import { useAuthStore } from '@/stores/authStore';
 
 // 管理员登录
 export const adminLogin = async (data) => {
@@ -141,6 +142,31 @@ export const changeAdminPassword = async (data) => {
     } catch (error) {
         throw new Error(error);
     }
+}
+
+// 人脸注册
+export function registerFace(data) {
+  return request({
+    url: '/api/face/register',
+    method: 'post',
+    params: { token: useAuthStore().token }, 
+    data: data,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
+// 人脸登录
+export function loginByFaceApi(data) {
+  return request({
+    url: '/api/face/login',
+    method: 'post',
+    data: data,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
 }
 
 
