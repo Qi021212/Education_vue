@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 //导入组件
 import Register from '@/views/user/Register.vue'
 import Login from '@/views/user/Login.vue'
+import FaceLogin from '@/views/user/FaceLogin.vue'
 import LayoutVue from '@/views/Menu.vue'
 import MainVue from '@/views/Main.vue'
 import TeachingMaterial from '@/views/teaching/TeachingMaterial.vue'
@@ -19,6 +20,7 @@ import liveRecord from '@/views/online/liveRecord.vue'
 const routes = [
     { path: '/register', component: Register },
     { path: '/login', component: Login },
+    { path: '/faceLogin', component: FaceLogin },
     {
         path: '/', component: LayoutVue, redirect: '/main', children: [
             { path: '/main', component: MainVue },

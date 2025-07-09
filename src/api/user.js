@@ -144,7 +144,7 @@ export const changeAdminPassword = async (data) => {
     }
 }
 
-// 人脸注册
+// 人脸录入
 export function registerFace(data) {
   return request({
     url: '/api/face/register',
@@ -158,10 +158,11 @@ export function registerFace(data) {
 }
 
 // 人脸登录
-export function loginByFaceApi(data) {
-  return request({
-    url: '/api/face/login',
+export function loginByFaceApi(data,username) {
+  return axios({
+    url: '/smartEdu/api/face/login',
     method: 'post',
+    params: { username: username },
     data: data,
     headers: {
       'Content-Type': 'multipart/form-data'

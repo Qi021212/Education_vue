@@ -36,6 +36,9 @@
                 <el-form-item class="text-center">
                     没有账号？<el-link type="primary" :underline="false" @click="redirectToRegister">立即注册</el-link>
                 </el-form-item>
+                <el-form-item>
+                    <el-button type="text" @click="redirectToFaceLogin">人脸登录</el-button>
+                </el-form-item>
             </el-form>
         </el-col>
     </el-row>
@@ -100,6 +103,10 @@ const handleLogin = async () => {
 
 const redirectToRegister = () => {
     router.push('/register')
+}
+
+const redirectToFaceLogin = () => {
+    router.push('/faceLogin')
 }
 </script>
 
