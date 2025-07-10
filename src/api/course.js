@@ -1,5 +1,7 @@
 import axios from "axios";
 import request from "@/utils/request";
+import { useAuthStore } from "@/stores/authStore";
+
 // 获取全部课程列表
 export const getCourseList = async () => {
     try {
@@ -28,6 +30,45 @@ export const getTeacherCourseList = async (data) => {
         return response.data;
     } catch (error) {
         console.error("Error fetching teacher course list:", error);
+        throw error;
+    }
+}
+
+// 根据课程查学生
+export const getStudentByCourse = async (courseId) => {
+    try {
+        console.log("Fetching students for course ID:", courseId);
+        const response = await request.get('/exam/studentlistbycourse',
+            {
+                params: {
+                    courseId: courseId
+                },
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching students by course:", error);
+        throw error;
+    }
+}
+
+// 根据课程查试卷
+export const getPaperByCourse = async (courseId) => {
+    try {
+        console.log("Fetching papers for course ID:", courseId);
+        const response = await request.get('/exam/paperlistbycourse',
+            {
+                params: {
+                    courseId: courseId,
+                    status: 0,
+                    token: useAuthStore().token
+                },
+            }
+        );
+        return response.data;
+    }
+    catch (error) {
+        console.error("Error fetching papers by course:", error);
         throw error;
     }
 }

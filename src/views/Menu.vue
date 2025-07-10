@@ -143,9 +143,9 @@ const menus = ref([
     {
         title: '账号管理',
         icon: User,
-        roles: ['admin', 'teacher'],
+        roles: ['admin'],
         children: [
-            { title: '教师账号', path: '/teacherAccount', roles: ['admin','teacher'] },
+            { title: '教师账号', path: '/teacherAccount', roles: ['admin'] },
             { title: '学生账号', path: '/studentAccount', roles: ['admin'] }
         ]
 

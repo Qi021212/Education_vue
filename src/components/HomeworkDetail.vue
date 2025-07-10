@@ -1,34 +1,33 @@
 <template>
   <div class="homework-detail">
     <el-descriptions :column="2" border>
-      <el-descriptions-item label="作业名称">{{ homeworkData.title }}</el-descriptions-item>
-      <el-descriptions-item label="课程类别">{{ getCategoryLabel(homeworkData.category) }}</el-descriptions-item>
-      <el-descriptions-item label="发布时间">{{ formatTime(homeworkData.publishTime) }}</el-descriptions-item>
-      <el-descriptions-item label="题目数量">{{ homeworkData.questionCount }}</el-descriptions-item>
-      <el-descriptions-item label="总分">{{ homeworkData.totalScore }}分</el-descriptions-item>
+      <el-descriptions-item label="作业名称">{{ detailData.name }}</el-descriptions-item>
+      <el-descriptions-item label="课程名称">{{ detailData.courseName }}</el-descriptions-item>
+      <el-descriptions-item label="开始时间">{{ formatTime(detailData.startTime) }}</el-descriptions-item>
+      <el-descriptions-item label="截止时间">{{ formatTime(detailData.endTime) }}</el-descriptions-item>
     </el-descriptions>
-    
-    <div class="question-list">
+
+    <div class="question-list" v-if="detailData.questions && detailData.questions.length">
       <h3>题目列表</h3>
-      
-      <div v-for="(question, index) in homeworkData.questions" :key="question.id || index" class="question-item">
+
+      <div v-for="(question, index) in detailData.questions" :key="question.id || index" class="question-item">
         <div class="question-header">
           <span class="question-index">第{{ index + 1 }}题</span>
           <span class="question-type">{{ getQuestionTypeLabel(question.type) }}</span>
           <span class="question-score">{{ question.score }}分</span>
         </div>
-        
+
         <div class="question-content">{{ question.content }}</div>
-        
+
         <div v-if="question.options && question.options.length" class="question-options">
           <div v-for="(option, optIndex) in question.options" :key="optIndex" class="option">
             {{ String.fromCharCode(65 + optIndex) }}. {{ option }}
           </div>
         </div>
-        
+
         <div class="question-answer">
           <strong>答案：</strong>
-          <span v-if="question.type === 'judge'">
+          <span v-if="question.type === 2"> <!-- 2 is for judge type -->
             {{ question.answer ? '正确' : '错误' }}
           </span>
           <span v-else-if="Array.isArray(question.answer)">
@@ -40,9 +39,8 @@
         </div>
       </div>
     </div>
-    
+
     <div class="action-buttons">
-      <el-button type="primary" @click="handleEdit">编辑作业</el-button>
       <el-button @click="handleClose">关闭</el-button>
     </div>
   </div>
@@ -52,7 +50,7 @@
 import { defineProps, defineEmits } from 'vue'
 
 const props = defineProps({
-  homeworkData: {
+  detailData: {
     type: Object,
     required: true
   }
@@ -62,11 +60,10 @@ const emit = defineEmits(['edit', 'close'])
 
 // 题型标签
 const questionTypes = [
-  { value: 'single', label: '单选题' },
-  { value: 'multiple', label: '多选题' },
-  { value: 'judge', label: '判断题' },
-  { value: 'fill', label: '填空题' },
-  { value: 'subjective', label: '主观题' }
+  { value: 0, label: '单选题' },
+  { value: 1, label: '多选题' },
+  { value: 2, label: '判断题' },
+  { value: 3, label: '填空题' },
 ]
 
 // 获取题型标签
@@ -75,20 +72,9 @@ const getQuestionTypeLabel = (type) => {
   return typeObj ? typeObj.label : type
 }
 
-// 获取课程标签
-const getCategoryLabel = (value) => {
-  const category = props.homeworkData.categories?.find(item => item.value === value) || { label: value }
-  return category.label
-}
-
 // 格式化时间
 const formatTime = (time) => {
   return time ? new Date(time).toLocaleString() : ''
-}
-
-// 编辑作业
-const handleEdit = () => {
-  emit('edit')
 }
 
 // 关闭
