@@ -142,7 +142,7 @@ const fetchRecords = async () => {
         courseName: searchForm.value.courseName
       }
     })
-    recordList.value = res.data.data || []
+    recordList.value = res.data || []
   } catch (e) {
     ElMessage.error('记录加载失败')
   }
@@ -158,13 +158,13 @@ const currentDetail = ref([])
 
 const viewDetail = async (row) => {
   try {
-    const res = await axios.get('/smartEdu/examrecord/examDetail', {
+    const res = await request.get('/examrecord/examDetail', {
       params: {
         examHomeworkId: row.examHomeworkId,
         studentUsername: row.studentUsername
       }
     })
-    currentDetail.value = (res.data.data || []).map(item => ({
+    currentDetail.value = (res.data || []).map(item => ({
       ...item,
       options: item.options ? JSON.parse(item.options) : []
     }))

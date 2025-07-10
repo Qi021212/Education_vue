@@ -52,7 +52,7 @@
             <span class="title-link" @click="handleView(row)">{{ row.title }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="课程类别" prop="course" width="120" align="center" sortable="custom"> </el-table-column>
+        <el-table-column label="课程类别" prop="course" width="150" align="center" sortable="custom"> </el-table-column>
         <el-table-column label="图片" width="120" align="center">
           <template #default="{ row }">
             <el-image v-if="row.picture" style="width: 80px; height: 60px" :src="row.picture"
@@ -146,7 +146,7 @@ const authStore = useAuthStore()
 
 // 课程类别选项
 const categories = ref([])
-import { getCourseList, getTeacherCourseList } from '@/api/course'
+import { getTeacherCourseList } from '@/api/course'
 const fetchTeacherCourseList = async () => {
   try {
     const response = await getTeacherCourseList(authStore.token)

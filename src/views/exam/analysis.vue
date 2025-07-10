@@ -11,12 +11,7 @@
       <el-form inline class="select-form">
         <el-form-item label="选择考试记录">
           <el-select v-model="selectedExamName" placeholder="请选择考试记录" @change="fetchAnalysisData">
-            <el-option
-              v-for="exam in examList"
-              :key="exam.examId"
-              :label="exam.examName"
-              :value="exam.examName"
-            />
+            <el-option v-for="exam in examList" :key="exam.examId" :label="exam.examName" :value="exam.examName" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -60,9 +55,11 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
-import axios from 'axios'
+import { ElMessage } from 'element-plus'
 import request from '@/utils/request'
 import VChart from 'vue-echarts'
+import { useAuthStore } from '@/stores/authStore'
+import axios from 'axios'
 
 const examList = ref([])
 const selectedExamName = ref(null)
@@ -79,8 +76,8 @@ const aiAnalysisResult = ref('')
 const fetchExamList = async () => {
   try {
     const res = await request.get('/exam/examAnalysis')
-    examList.value = res.data
-    if (examList.value.length) {
+    examList.value = res
+    if (examList.value) {
       selectedExamName.value = examList.value[0].examName
       fetchAnalysisData()
     }
@@ -93,8 +90,8 @@ const fetchExamList = async () => {
 const fetchAnalysisData = async () => {
   if (!selectedExamName.value) return
   try {
-    const res = await axios.get('/smartEdu/examrecord/resultList')
-    const filtered = res.data.data.filter(e => e.examName === selectedExamName.value)
+    const res = await request.get('/examrecord/resultList')
+    const filtered = res.data.filter(e => e.examName === selectedExamName.value)
     scoreData.value = filtered.map(e => ({ student: e.studentName, score: e.totalScore }))
 
     const ranges = [
@@ -163,8 +160,9 @@ watch(showAiDialog, async (visible) => {
   if (visible && selectedExamName.value) {
     aiAnalysisResult.value = '正在加载分析结果...'
     try {
-      const token = localStorage.getItem('token') || ''
-      const res = await axios.post('/smartEdu/ai/analyze', null, {
+      const token = useAuthStore().token
+      const res = await axios.post('/smartEdu/ai/analyze', null, 
+      {
         params: { examName: selectedExamName.value },
         headers: {
           Authorization: `Bearer ${token}`
@@ -179,12 +177,36 @@ watch(showAiDialog, async (visible) => {
 })
 
 // 导出成绩
-const exportScore = () => {
-  if (!selectedExamName.value) return
-  const params = new URLSearchParams({
-    examName: selectedExamName.value
-  }).toString()
-  window.open(`/smartEdu/exam/exportExcel?${params}`, '_blank')
+const exportScore = async () => {
+  if (!selectedExamName.value) {
+    ElMessage.warning('请先选择考试')
+    return
+  }
+
+  try {
+    const response = await request({
+      url: '/exam/exportExcel',
+      method: 'get',
+      params: {
+        examName: selectedExamName.value
+      },
+      responseType: 'blob'
+    })
+
+    // 创建下载链接
+    const url = window.URL.createObjectURL(new Blob([response]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `${selectedExamName.value}_成绩表.xls`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+
+    ElMessage.success('导出成功')
+  } catch (error) {
+    console.error('导出失败:', error)
+    ElMessage.error('导出失败')
+  }
 }
 
 onMounted(fetchExamList)
@@ -194,44 +216,54 @@ onMounted(fetchExamList)
 h3 {
   margin: 0;
 }
+
 .card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
+
 .select-form {
   margin-bottom: 20px;
 }
+
 .chart-wrapper {
   display: flex;
   gap: 20px;
   flex-wrap: wrap;
 }
+
 .chart-box {
   flex: 1;
   min-width: 300px;
 }
+
 .stat-card {
   margin-top: 20px;
 }
+
 .stat-row {
   display: flex;
   align-items: center;
   gap: 40px;
   flex-wrap: wrap;
 }
+
 .stat-row p {
   font-size: 16px;
   margin: 0;
 }
+
 .highlight {
   color: #409EFF;
   font-weight: bold;
 }
+
 .el-input,
 .el-select {
   width: 160px;
 }
+
 .ai-content {
   font-size: 15px;
   line-height: 1.8;

@@ -47,7 +47,7 @@ export const teacherLogin = async (data) => {
 };
 
 // 管理员注册
-export const adminRegister = (data,params) => {
+export const adminRegister = (data, params) => {
     return axios({
         url: '/smartEdu/users/register',
         method: 'post',
@@ -57,7 +57,7 @@ export const adminRegister = (data,params) => {
 }
 
 // 教师注册
-export const teacherRegister = (data,params) => {
+export const teacherRegister = (data, params) => {
     return axios({
         url: '/smartEdu/teacher/register',
         method: 'post',
@@ -68,12 +68,12 @@ export const teacherRegister = (data,params) => {
 
 // 发送邮箱验证码
 export const sendEmailCode = (email) => {
-  try {
-    console.log(email);
+    try {
+        console.log(email);
         const response = axios.post('/smartEdu/teacher/sendVerificationCode',
             null, // 请求体包含教师信息
             {
-                params:{
+                params: {
                     email: email
                 }
             }
@@ -147,28 +147,43 @@ export const changeAdminPassword = async (data) => {
 
 // 人脸录入
 export function registerFace(data) {
-  return request({
-    url: '/api/face/register',
-    method: 'post',
-    params: { token: useAuthStore().token }, 
-    data: data,
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  })
+    return request({
+        url: '/api/face/register',
+        method: 'post',
+        params: { token: useAuthStore().token },
+        data: data,
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    })
 }
 
 // 人脸登录
-export function loginByFaceApi(data,username) {
-  return axios({
-    url: '/smartEdu/api/face/login',
-    method: 'post',
-    params: { username: username },
-    data: data,
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  })
+export function loginByFaceApi(data, username) {
+    return axios({
+        url: '/smartEdu/api/face/login',
+        method: 'post',
+        params: { username: username },
+        data: data,
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    })
 }
+
+// 获取评价数据
+export const getTeacherEvaluations = async () => {
+    try {
+        const response = await request.get('/teacher/evaluations', {
+            params: {
+                token: useAuthStore().token,
+            }
+        });
+        return response;
+    } catch (error) {
+        console.error('获取教师评价失败:', error);
+        throw error; // 保持原始错误信息
+    }
+};
 
 

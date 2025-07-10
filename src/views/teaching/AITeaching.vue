@@ -69,7 +69,7 @@
                 </div>
                 <el-table :data="historyList" border style="width: 100%">
                     <el-table-column prop="createdTime" label="生成时间" width="180" />
-                    <el-table-column prop="subject" label="学科" width="120" />
+                    <el-table-column prop="subject" label="学科" width="180" />
                     <el-table-column prop="grade" label="年级" width="120" />
                     <el-table-column prop="topic" label="主题" />
                     <el-table-column label="操作" width="180">
@@ -100,17 +100,26 @@ const prepareQuery = reactive({
 })
 
 // 学科选项
-const subjectOptions = [
-    { value: '语文', label: '语文' },
-    { value: '数学', label: '数学' },
-    { value: '英语', label: '英语' },
-    { value: '物理', label: '物理' },
-    { value: '化学', label: '化学' },
-    { value: '生物', label: '生物' },
-    { value: '历史', label: '历史' },
-    { value: '地理', label: '地理' },
-    { value: '政治', label: '政治' }
-]
+const subjectOptions = ref([])
+
+import { getTeacherCourseList } from '@/api/course'
+const fetchTeacherCourseList = async () => {
+  try {
+    const response = await getTeacherCourseList(useAuthStore().token)
+    if (response && Array.isArray(response)) {
+      subjectOptions.value = response.map(item => ({
+        value: item.course,    // 使用课程ID作为value
+        label: item.course // 使用课程名称作为label
+      }))
+    } else {
+      ElMessage.error('获取课程列表失败: 无效的响应格式')
+    }
+  } catch (error) {
+    console.error('获取课程列表错误:', error)
+    ElMessage.error('获取课程列表失败: ' + (error.message || '网络错误'))
+  }
+}
+
 
 // 年级选项
 const gradeOptions = [
@@ -125,7 +134,8 @@ const gradeOptions = [
     { value: '九年级', label: '九年级' },
     { value: '高一', label: '高一' },
     { value: '高二', label: '高二' },
-    { value: '高三', label: '高三' }
+    { value: '高三', label: '高三' },
+    { value: '大学', label: '大学' }
 ]
 
 // 类型映射
@@ -290,6 +300,7 @@ const cleanMarkdown = (text) => {
 // 初始化
 onMounted(() => {
     fetchHistory()
+    fetchTeacherCourseList()
 })
 </script>
 

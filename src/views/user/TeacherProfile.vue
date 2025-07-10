@@ -96,6 +96,31 @@
       </div>
     </el-card>
 
+    <!-- 教师评价卡片 -->
+    <el-card class="evaluation-card" style="margin-top: 20px;">
+      <div class="evaluation-header">
+        <h2>教师评价</h2>
+      </div>
+
+      <el-table :data="evaluationData" style="width: 100%" v-loading="loading">
+        <el-table-column prop="courseName" label="课程名称" width="180" />
+        <el-table-column prop="addtime" label="评价时间" width="180" />
+        <el-table-column prop="studentName" label="学生姓名" />
+        <el-table-column prop="rating" label="评分" width="200">
+          <template #default="{ row }">
+            <el-rate v-model="row.rating" disabled show-score text-color="#ff9900" />
+          </template>
+        </el-table-column>
+        <el-table-column prop="comment" label="评价内容" />
+      </el-table>
+
+      <div class="pagination-container" v-if="evaluationData.length > 0">
+        <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :total="total"
+          :page-sizes="[5, 10, 20]" layout="total, sizes, prev, pager, next, jumper" @size-change="fetchEvaluations"
+          @current-change="fetchEvaluations" />
+      </div>
+    </el-card>
+
     <!-- 修改密码对话框 -->
     <el-dialog v-model="passwordDialogVisible" title="修改密码" width="500px">
       <el-form :model="passwordForm" :rules="passwordRules" ref="passwordFormRef" label-width="100px">
@@ -128,6 +153,7 @@ import FaceRegistration from '@/components/FaceRegistration.vue'
 
 import { useAuthStore } from '@/stores/authStore'
 const authStore = useAuthStore()
+
 // 教师信息
 const teacherInfo = reactive({
   id: authStore.userInfo.id,
@@ -329,8 +355,38 @@ const handleRegistrationSuccess = () => {
   authStore.updateUserInfo({ certificated: true })
 }
 
+// 教师评价相关
+import { getTeacherEvaluations } from '@/api/user'
+// 评价数据
+const evaluationData = ref([])
+const loading = ref(false)
+const currentPage = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
+
+// 获取评价数据
+const fetchEvaluations = async () => {
+  try {
+    loading.value = true
+    const response = await getTeacherEvaluations()
+    console.log(response)
+    if (response) {
+      evaluationData.value = response.data
+      total.value = response.data.length
+    } else {
+      throw new Error(response?.message || '获取评价数据失败')
+    }
+  } catch (error) {
+    console.error('获取评价数据错误:', error)
+    ElMessage.error('获取评价数据失败: ' + (error.message || '网络错误'))
+  } finally {
+    loading.value = false
+  }
+}
+
 onMounted(() => {
   fetchCourseList()
+  fetchEvaluations()
 })
 </script>
 
@@ -453,6 +509,26 @@ onMounted(() => {
   width: 100%;
 }
 
+.evaluation-card {
+  margin-top: 20px;
+}
+
+.evaluation-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.evaluation-header h2 {
+  margin: 0;
+  color: #333;
+}
+
+.pagination-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .profile-content {
@@ -471,6 +547,10 @@ onMounted(() => {
   .profile-actions .el-button {
     width: 100%;
     margin-bottom: 10px;
+  }
+
+  .evaluation-card {
+    padding: 10px;
   }
 }
 </style>
