@@ -258,13 +258,13 @@ const handleView = (row) => {
     }
     // 获取作业详情
     loading.value = true
-    getHomeworkDetail(authStore.token, requestData)
+    getHomeworkDetail(requestData)
         .then(response => {
             if (response) {
                 // 合并API返回的数据和原始行数据
                 currentItem.value = {
                     ...originalData,
-                    list: response.list
+                    list: response
                 }
                 detailDialogVisible.value = true
             } else {

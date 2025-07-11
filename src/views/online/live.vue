@@ -87,7 +87,7 @@ export default {
 
         // 状态变量
         const channelName = ref('classroom1');
-        const tempToken = ref('007eJxTYOiS+mZc9Geld9f77ya/c7vnHHfgaQrewakTnzNt0uWVu00UGMxSjY2NzSzM04wMzU0ski0Tk1ISLQ2NzJOM0pJNzJMszV/lZDQEMjI8v2jGyMgAgSA+F0NyTmJxcVF+fq4hAwMAdhcjDw=='); // 从控制台获取的临时Token
+        const tempToken = ref('007eJxTYEhb4Nzyx1N+K1voSkfPoNe2t7xn/b5ulcKfLiZzyL7k2S8FBrNUY2NjMwvzNCNDcxOLZMvEpJRES0Mj8ySjtGQT8yTLheIFGQ2BjAwvXE0ZGRkgEMTnYkjOSSwuLsrPzzVkYAAAw8Agow=='); // 从控制台获取的临时Token
         const userRole = ref('host');
         const userId = ref(123);
         const isJoined = ref(false);

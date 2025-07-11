@@ -18,6 +18,7 @@ import TestRecord from '@/views/exam/testRecord.vue'
 import Analysis from '@/views/exam/analysis.vue'
 import TeacherProfile from '@/views/user/TeacherProfile.vue'
 import TeacherAccount from '@/views/account/TeacherAccount.vue'
+import StuedentAccount from '@/views/account/StuedentAccount.vue'
 import live from '@/views/online/live.vue'
 import liveRecord from '@/views/online/liveRecord.vue'
 
@@ -41,6 +42,7 @@ const routes = [
             { path: 'analysis', component: Analysis },
             { path: 'teacherProfile', component: TeacherProfile },
             { path: 'teacherAccount', component: TeacherAccount },
+            { path: 'studentAccount', component: StuedentAccount },
             { path: 'live', component: live },
             { path: 'liveRecord', component: liveRecord }
 

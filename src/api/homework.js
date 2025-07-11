@@ -20,14 +20,13 @@ export const getHomeworkList = async (token) => {
 }
 
 // 获取收取作业详情
-export const getHomeworkDetail = async (token, data) => {
+export const getHomeworkDetail = async (data) => {
     try {
         console.log("Fetching homework detail with data:", data);
-        const response = await request.post('/homeworkRecord/list',
+        const response = await request.post('/homeworkRecord/lists',
             null,
             {
                 params: {
-                    token: token,
                     sUsername: data.sUsername,
                     paperid: data.homeworkId,
                 }
